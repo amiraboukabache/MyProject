@@ -1,0 +1,4 @@
+.env
+firebase_credentials.json
+__pycache__/
+routes/__pycache__/
