@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BridgeSign — Messages</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --ink:    #1A1B26; --sage:  #6B7A5E; --sage-lt: #8A9A74;
+      --burg:   #6B1E2E; --cream: #F4F2EB; --rose:    #B08A80;
+      --white:  #FFFFFF; --muted: #7A7A7A; --border: rgba(107,122,94,0.15);
+      --radius: 16px; --sb: 260px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Outfit', sans-serif; background: var(--cream); color: var(--ink); display: flex; height: 100vh; overflow: hidden; }
+
+    .sidebar {
+      width: var(--sb); background: var(--ink); display: flex; flex-direction: column;
+      padding: 26px 18px; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
+    }
+    .logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 38px; }
+    .logo-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--burg); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .logo em { color: var(--rose); font-style: normal; }
+    .sb-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.25); padding: 0 12px; margin: 18px 0 8px; }
+    .nav { display: flex; flex-direction: column; gap: 3px; }
+    .nav-link { display: flex; align-items: center; gap: 11px; padding: 10px 14px; border-radius: 11px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.45); cursor: pointer; transition: all .2s; text-decoration: none; border: none; background: none; width: 100%; font-family: 'Outfit', sans-serif; }
+    .nav-link:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+    .nav-link.active { background: var(--burg); color: var(--white); }
+    .nav-link .ni { font-size: 17px; width: 20px; text-align: center; }
+    .nav-link .badge { margin-left: auto; background: var(--sage); color: var(--white); font-size: 10px; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .sidebar-foot { margin-top: auto; }
+    .user-pill { display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: 11px; background: rgba(255,255,255,0.05); }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--burg); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .u-name { font-size: 13px; font-weight: 600; color: var(--white); }
+    .u-role { font-size: 11px; color: rgba(255,255,255,0.35); }
+
+    .main { margin-left: var(--sb); flex: 1; display: flex; height: 100vh; overflow: hidden; }
+
+    .conv-list { width: 320px; flex-shrink: 0; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .conv-header { padding: 22px 22px 16px; border-bottom: 1px solid var(--border); }
+    .conv-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; margin-bottom: 14px; }
+    .search-box { display: flex; align-items: center; gap: 9px; background: var(--cream); border-radius: 10px; padding: 9px 13px; }
+    .search-box input { border: none; background: none; font-size: 13px; font-family: 'Outfit', sans-serif; color: var(--ink); outline: none; flex: 1; }
+    .search-box input::placeholder { color: #bbb; }
+    .conv-items { flex: 1; overflow-y: auto; }
+    .conv-item { display: flex; align-items: center; gap: 13px; padding: 14px 20px; cursor: pointer; transition: background .15s; border-bottom: 1px solid rgba(107,122,94,0.07); position: relative; }
+    .conv-item:hover { background: rgba(107,30,46,0.04); }
+    .conv-item.active { background: rgba(107,30,46,0.07); }
+    .conv-item.active::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; background: var(--burg); border-radius: 0 3px 3px 0; }
+    .conv-av { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; background: rgba(107,122,94,0.12); position: relative; }
+    .conv-av .online { position: absolute; bottom: 1px; right: 1px; width: 11px; height: 11px; background: #4CAF50; border-radius: 50%; border: 2px solid var(--white); }
+    .conv-meta { flex: 1; min-width: 0; }
+    .conv-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .conv-preview { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+    .conv-time { font-size: 11px; color: var(--muted); }
+    .conv-unread { background: var(--burg); color: var(--white); font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--cream); min-width: 0; }
+    .chat-header { background: var(--white); padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .chat-user { display: flex; align-items: center; gap: 13px; }
+    .chat-av { width: 42px; height: 42px; border-radius: 50%; background: rgba(107,122,94,0.12); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .chat-name { font-size: 16px; font-weight: 600; }
+    .chat-status { font-size: 12px; color: #4CAF50; margin-top: 2px; }
+    .chat-actions { display: flex; gap: 10px; }
+    .icon-btn { width: 38px; height: 38px; border-radius: 10px; border: none; cursor: pointer; background: var(--cream); display: flex; align-items: center; justify-content: center; font-size: 16px; transition: background .2s; }
+    .icon-btn:hover { background: rgba(107,122,94,0.15); }
+
+    .chat-messages { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
+
+    .day-divider { display: flex; align-items: center; gap: 12px; margin: 4px 0; }
+    .day-divider::before, .day-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .day-divider span { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+    .msg { display: flex; flex-direction: column; max-width: 68%; }
+    .msg.from-me { align-self: flex-end; align-items: flex-end; }
+    .msg.from-them { align-self: flex-start; align-items: flex-start; }
+
+    .msg-bubble { padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.6; max-width: 100%; }
+    .from-me .msg-bubble { background: var(--burg); color: var(--white); border-bottom-right-radius: 4px; }
+    .from-them .msg-bubble { background: var(--white); color: var(--ink); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+
+    /* Sign message received from deaf user */
+    .sign-received {
+      background: rgba(107,122,94,0.1); border: 1.5px dashed rgba(107,122,94,0.4);
+      border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+    }
+    .sign-icon-big { font-size: 32px; }
+    .sign-label strong { display: block; font-size: 13px; font-weight: 600; }
+    .sign-label span { font-size: 12px; color: var(--muted); }
+
+    .msg-meta { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+    .msg-meta .check { color: var(--burg); }
+
+    /* INPUT */
+    .chat-input-area { background: var(--white); border-top: 1px solid var(--border); padding: 16px 24px; flex-shrink: 0; }
+    .input-mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .imt { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 50px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; border: 1.5px solid var(--border); background: var(--cream); color: var(--muted); font-family: 'Outfit', sans-serif; }
+    .imt:hover { border-color: var(--burg); color: var(--burg); }
+    .imt.active { background: var(--burg); border-color: var(--burg); color: var(--white); }
+
+    .input-panel { display: none; }
+    .input-panel.visible { display: block; }
+
+    /* Voice panel */
+    .voice-visualizer { background: var(--ink); border-radius: 12px; height: 80px; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0 20px; margin-bottom: 12px; }
+    .v-bar { width: 4px; height: 10px; background: var(--rose); border-radius: 2px; transition: height .1s; }
+    .v-bar.live { animation: wavey 0.8s ease-in-out infinite alternate; }
+    .v-bar:nth-child(2){animation-delay:.1s}.v-bar:nth-child(3){animation-delay:.2s}
+    .v-bar:nth-child(4){animation-delay:.3s}.v-bar:nth-child(5){animation-delay:.4s}
+    .v-bar:nth-child(6){animation-delay:.3s}.v-bar:nth-child(7){animation-delay:.2s}
+    .v-bar:nth-child(8){animation-delay:.1s}
+    @keyframes wavey { from{height:6px}to{height:54px} }
+    .voice-ph { color: rgba(255,255,255,0.3); font-size: 12px; text-align: center; display: none; }
+    .voice-ph.visible { display: block; }
+    .voice-actions { display: flex; gap: 10px; }
+    .btn-voice { flex: 1; padding: 11px; border-radius: 12px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all .2s; }
+    .btn-voice-rec { background: var(--burg); color: var(--white); }
+    .btn-voice-rec:hover { background: #8b1c2b; }
+    .btn-voice-send { background: var(--sage); color: var(--white); }
+    .btn-voice-send:hover { background: var(--sage-lt); }
+
+    /* Text panel */
+    .text-row { display: flex; gap: 10px; align-items: flex-end; }
+    .msg-textarea { flex: 1; padding: 12px 15px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--ink); background: var(--cream); resize: none; outline: none; transition: border-color .2s, box-shadow .2s; height: 48px; max-height: 120px; }
+    .msg-textarea:focus { border-color: var(--burg); box-shadow: 0 0 0 3px rgba(107,30,46,0.08); }
+    .msg-textarea::placeholder { color: #bbb; }
+    .btn-send { width: 48px; height: 48px; border-radius: 12px; border: none; cursor: pointer; background: var(--burg); color: var(--white); font-size: 18px; display: flex; align-items: center; justify-content: center; transition: background .2s; flex-shrink: 0; }
+    .btn-send:hover { background: #8b1c2b; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(107,122,94,0.25); border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="index.html" class="logo">
+    <div class="logo-mark">🤝</div>
+    Bridge<em>Sign</em>
+  </a>
+  <div class="sb-section">Messaging</div>
+  <nav class="nav">
+    <a class="nav-link active" href="#">
+      <span class="ni">💬</span> Messages <span class="badge">2</span>
+    </a>
+    <a class="nav-link" href="#"><span class="ni">🔔</span> Notifications</a>
+  </nav>
+  <div class="sb-section">Account</div>
+  <nav class="nav">
+    <a class="nav-link" href="#"><span class="ni">👤</span> Profile</a>
+    <a class="nav-link" href="#"><span class="ni">⚙️</span> Settings</a>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="user-pill">
+      <div class="avatar">🗣️</div>
+      <div>
+        <div class="u-name">Sara H.</div>
+        <div class="u-role">Hearing User</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="conv-list">
+    <div class="conv-header">
+      <h2>Messages</h2>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="Search conversations…"/>
+      </div>
+    </div>
+    <div class="conv-items">
+
+      <div class="conv-item active" onclick="openConv(this,'Ahmed D.')">
+        <div class="conv-av">🧏<span class="online"></span></div>
+        <div class="conv-meta">
+          <div class="conv-name">Ahmed D.</div>
+          <div class="conv-preview">🤟 Sign message sent</div>
+        </div>
+        <div class="conv-right">
+          <span class="conv-time">5m</span>
+          <span class="conv-unread">2</span>
+        </div>
+      </div>
+
+      <div class="conv-item" onclick="openConv(this,'Lina K.')">
+        <div class="conv-av">🧏</div>
+        <div class="conv-meta">
+          <div class="conv-name">Lina K.</div>
+          <div class="conv-preview">🤟 "Thank you very much"</div>
+        </div>
+        <div class="conv-right">
+          <span class="conv-time">1h</span>
+        </div>
+      </div>
+
+      <div class="conv-item" onclick="openConv(this,'Mark T.')">
+        <div class="conv-av">🗣️<span class="online"></span></div>
+        <div class="conv-meta">
+          <div class="conv-name">Mark T.</div>
+          <div class="conv-preview">The report is ready.</div>
+        </div>
+        <div class="conv-right">
+          <span class="conv-time">3h</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="chat-area">
+    <div class="chat-header">
+      <div class="chat-user">
+        <div class="chat-av">🧏</div>
+        <div>
+          <div class="chat-name" id="chat-contact-name">Ahmed D.</div>
+          <div class="chat-status">● Online</div>
+        </div>
+      </div>
+      <div class="chat-actions">
+        <button class="icon-btn">📞</button>
+        <button class="icon-btn">ℹ️</button>
+        <a href="login.html" class="icon-btn" style="text-decoration:none;">🚪</a>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="day-divider"><span>Today</span></div>
+
+      <div class="msg from-me">
+        <div class="msg-bubble">Hey Ahmed! Are you free for a meeting today at 3pm?</div>
+        <div class="msg-meta">You · 9:14 AM <span class="check">✓✓</span></div>
+      </div>
+
+      <!-- Sign message received from deaf user -->
+      <div class="msg from-them">
+        <div class="sign-received">
+          <span class="sign-icon-big">🤟</span>
+          <div class="sign-label">
+            <strong>Sign Message from Ahmed</strong>
+            <span>"Yes, 3pm works perfectly for me!"</span>
+          </div>
+        </div>
+        <div class="msg-meta">Ahmed · 9:17 AM</div>
+      </div>
+
+      <div class="msg from-me">
+        <div class="msg-bubble">Perfect! I'll send you the meeting link shortly.</div>
+        <div class="msg-meta">You · 9:18 AM <span class="check">✓✓</span></div>
+      </div>
+
+      <div class="msg from-them">
+        <div class="sign-received">
+          <span class="sign-icon-big">🤟</span>
+          <div class="sign-label">
+            <strong>Sign Message from Ahmed</strong>
+            <span>"Thank you Sara 🙏"</span>
+          </div>
+        </div>
+        <div class="msg-meta">Ahmed · 9:20 AM</div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="input-mode-tabs">
+        <button class="imt active" onclick="setMode('voice', this)">🎙️ Voice</button>
+        <button class="imt" onclick="setMode('text', this)">✍️ Type</button>
+      </div>
+
+      <!-- Voice panel -->
+      <div class="input-panel visible" id="panel-voice">
+        <div class="voice-visualizer">
+          <div class="v-bar" id="vb1"></div>
+          <div class="v-bar" id="vb2"></div>
+          <div class="v-bar" id="vb3"></div>
+          <div class="v-bar" id="vb4"></div>
+          <div class="v-bar" id="vb5"></div>
+          <div class="v-bar" id="vb6"></div>
+          <div class="v-bar" id="vb7"></div>
+          <div class="v-bar" id="vb8"></div>
+        </div>
+        <div class="voice-actions">
+          <button class="btn-voice btn-voice-rec" id="rec-btn" onclick="toggleRecording()">🎙️ Hold to Record</button>
+          <button class="btn-voice btn-voice-send" onclick="sendVoiceMsg()">Send Message ➤</button>
+        </div>
+      </div>
+
+      <!-- Text panel -->
+      <div class="input-panel" id="panel-text">
+        <div class="text-row">
+          <textarea class="msg-textarea" id="text-input" placeholder="Type your message…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="btn-send" onclick="sendTextMsg()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let recording = false;
+
+  function setMode(mode, btn) {
+    document.querySelectorAll('.imt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.input-panel').forEach(p => p.classList.remove('visible'));
+    document.getElementById('panel-' + mode).classList.add('visible');
+  }
+
+  function toggleRecording() {
+    const btn = document.getElementById('rec-btn');
+    const bars = document.querySelectorAll('.v-bar');
+    recording = !recording;
+    if (recording) {
+      bars.forEach(b => b.classList.add('live'));
+      btn.textContent = '⏹ Stop Recording';
+      btn.style.background = '#8b1c2b';
+    } else {
+      bars.forEach(b => b.classList.remove('live'));
+      btn.textContent = '🎙️ Hold to Record';
+      btn.style.background = '';
+    }
+  }
+
+  function sendVoiceMsg() {
+    if (recording) toggleRecording();
+    const examples = ["Let's meet at 3pm", "I'll send the document", "Can you see the sign?", "Thank you for your message"];
+    const text = examples[Math.floor(Math.random() * examples.length)];
+    appendMsg('voice', text);
+  }
+
+  function sendTextMsg() {
+    const ta = document.getElementById('text-input');
+    const text = ta.value.trim();
+    if (!text) return;
+    appendMsg('text', text);
+    ta.value = '';
+    ta.style.height = '48px';
+  }
+
+  function appendMsg(type, text) {
+    const container = document.getElementById('chat-messages');
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const div = document.createElement('div');
+    div.className = 'msg from-me';
+    const icon = type === 'voice' ? '🎙️' : '✍️';
+    div.innerHTML = `
+      <div class="msg-bubble">${icon} ${text}</div>
+      <div class="msg-meta">You · ${now} <span class="check">✓✓</span></div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function openConv(el, name) {
+    document.querySelectorAll('.conv-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    el.querySelector('.conv-unread')?.remove();
+    document.getElementById('chat-contact-name').textContent = name;
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTextMsg(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = '48px';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BridgeSign — Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --sage:       #818362;
+      --sage-light: #a0a57e;
+      --burgundy:   #691420;
+      --cream:      #F1F1E8;
+      --rose:       #AC8E85;
+      --dark:       #1E202B;
+      --white:      #FFFFFF;
+      --muted:      #6b6b6b;
+      --radius:     14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--dark); display: flex; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { width: 240px; background: var(--dark); display: flex; flex-direction: column; padding: 28px 20px; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
+    .sidebar-logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 40px; }
+    .sidebar-logo span { color: var(--rose); }
+    .sidebar-logo-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--sage); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .sidebar-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.3); margin-bottom: 10px; margin-top: 20px; padding-left: 12px; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5); cursor: pointer; transition: all .2s; text-decoration: none; border: none; background: none; width: 100%; }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+    .nav-item.active { background: var(--rose); color: var(--white); }
+    .nav-item .nav-icon { font-size: 17px; width: 22px; text-align: center; }
+    .sidebar-bottom { margin-top: auto; }
+    .user-badge { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.05); }
+    .user-avatar-sm { width: 36px; height: 36px; border-radius: 50%; background: var(--rose); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .user-info-sm .user-name { font-size: 13px; font-weight: 600; color: var(--white); }
+    .user-info-sm .user-role { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+    /* MAIN */
+    .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+
+    /* TOPBAR */
+    .topbar { background: var(--white); padding: 18px 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(129,131,98,0.12); position: sticky; top: 0; z-index: 40; }
+    .topbar-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; }
+    .topbar-title span { color: var(--rose); font-style: italic; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .logout-btn { padding: 9px 20px; border-radius: 50px; background: rgba(105,20,32,0.08); color: var(--burgundy); border: 1px solid rgba(105,20,32,0.2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; text-decoration: none; }
+    .logout-btn:hover { background: var(--burgundy); color: var(--white); }
+
+    /* CONTENT */
+    .content { padding: 36px; display: flex; flex-direction: column; gap: 28px; }
+
+    /* SECTIONS */
+    .section { display: none; flex-direction: column; gap: 28px; }
+    .section.active { display: flex; }
+
+    /* STATS */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .stat-card { background: var(--white); border-radius: var(--radius); padding: 22px 24px; border: 1px solid rgba(129,131,98,0.12); display: flex; align-items: center; gap: 16px; transition: transform .2s; }
+    .stat-card:hover { transform: translateY(-3px); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .stat-card:nth-child(1) .stat-icon { background: rgba(129,131,98,0.12); }
+    .stat-card:nth-child(2) .stat-icon { background: rgba(105,20,32,0.08); }
+    .stat-card:nth-child(3) .stat-icon { background: rgba(172,142,133,0.15); }
+    .stat-card:nth-child(4) .stat-icon { background: rgba(30,32,43,0.08); }
+    .stat-info .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; line-height: 1; }
+    .stat-info .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* CARDS */
+    .card { background: var(--white); border-radius: var(--radius); padding: 28px; border: 1px solid rgba(129,131,98,0.12); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .card-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; }
+    .card-badge { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 50px; }
+    .badge-sage { background: rgba(129,131,98,0.12); color: var(--sage); }
+    .badge-rose { background: rgba(172,142,133,0.15); color: var(--rose); }
+    .badge-burg { background: rgba(105,20,32,0.08); color: var(--burgundy); }
+
+    /* TABLE */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid rgba(129,131,98,0.15); }
+    td { padding: 13px 14px; font-size: 14px; border-bottom: 1px solid rgba(129,131,98,0.08); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(129,131,98,0.04); }
+    .user-cell { display: flex; align-items: center; gap: 10px; }
+    .user-av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .av-deaf    { background: rgba(129,131,98,0.15); }
+    .av-hearing { background: rgba(105,20,32,0.1); }
+    .role-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 50px; }
+    .role-deaf    { background: rgba(129,131,98,0.12); color: var(--sage); }
+    .role-hearing { background: rgba(105,20,32,0.08); color: var(--burgundy); }
+    .status-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 50px; }
+    .status-active   { background: rgba(129,131,98,0.15); color: var(--sage); }
+    .status-inactive { background: rgba(172,142,133,0.15); color: var(--rose); }
+
+    /* ACTION BUTTONS */
+    .action-group { display: flex; gap: 6px; }
+    .btn-sm { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all .2s; }
+    .btn-edit { background: rgba(129,131,98,0.1); color: var(--sage); }
+    .btn-edit:hover { background: var(--sage); color: var(--white); }
+    .btn-del  { background: rgba(105,20,32,0.08); color: var(--burgundy); }
+    .btn-del:hover  { background: var(--burgundy); color: var(--white); }
+
+    /* ADD FORM */
+    .add-form { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .add-input { flex: 1; min-width: 160px; padding: 11px 14px; border: 1.5px solid rgba(129,131,98,0.25); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--dark); background: var(--cream); outline: none; transition: border-color .2s; }
+    .add-input:focus { border-color: var(--sage); }
+    .btn-add { padding: 11px 22px; border-radius: var(--radius); background: var(--sage); color: var(--white); font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: background .2s; white-space: nowrap; }
+    .btn-add:hover { background: var(--sage-light); }
+
+    /* LOGS */
+    .logs-list { display: flex; flex-direction: column; gap: 10px; }
+    .log-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 10px; background: var(--cream); }
+    .log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .log-info { background: rgba(129,131,98,0.4); }
+    .log-warn { background: var(--rose); }
+    .log-error { background: var(--burgundy); }
+    .log-text { flex: 1; font-size: 13px; color: var(--dark); }
+    .log-time { font-size: 11px; color: var(--muted); }
+
+    /* SEARCH BAR */
+    .search-bar { display: flex; gap: 12px; margin-bottom: 20px; }
+    .search-input { flex: 1; padding: 11px 14px; border: 1.5px solid rgba(129,131,98,0.2); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--dark); background: var(--cream); outline: none; transition: border-color .2s; }
+    .search-input:focus { border-color: var(--sage); }
+    .filter-select { padding: 11px 14px; border: 1.5px solid rgba(129,131,98,0.2); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--dark); background: var(--cream); outline: none; cursor: pointer; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .content { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <div class="sidebar-logo-icon">🤝</div>
+    Bridge<span>Sign</span>
+  </a>
+  <div class="sidebar-label">Management</div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" onclick="showSection('overview')">
+      <span class="nav-icon">🏠</span> Overview
+    </button>
+    <button class="nav-item" onclick="showSection('users')">
+      <span class="nav-icon">👥</span> Manage Users
+    </button>
+    <button class="nav-item" onclick="showSection('mapping')">
+      <span class="nav-icon">🗂️</span> Mapping Data
+    </button>
+    <button class="nav-item" onclick="showSection('monitor')">
+      <span class="nav-icon">📊</span> Monitor System
+    </button>
+    <button class="nav-item" onclick="showSection('consult')">
+      <span class="nav-icon">🔍</span> Consult Data
+    </button>
+  </nav>
+  <div class="sidebar-label">Account</div>
+  <nav class="sidebar-nav">
+    <button class="nav-item" onclick="showSection('settings')">
+      <span class="nav-icon">⚙️</span> Settings
+    </button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-badge">
+      <div class="user-avatar-sm">🛡️</div>
+      <div class="user-info-sm">
+        <div class="user-name">Admin</div>
+        <div class="user-role">Administrator</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Overview — <span>Admin Panel</span></div>
+    <div class="topbar-right">
+      <a href="login.html" class="logout-btn">Sign Out</a>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="section active" id="section-overview">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info"><div class="stat-num">48</div><div class="stat-label">Total Users</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🧏</div>
+          <div class="stat-info"><div class="stat-num">29</div><div class="stat-label">Deaf Users</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🗣️</div>
+          <div class="stat-info"><div class="stat-num">19</div><div class="stat-label">Hearing Users</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🗂️</div>
+          <div class="stat-info"><div class="stat-num">124</div><div class="stat-label">Sign Mappings</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Activity</div>
+          <div class="card-badge badge-sage">Live</div>
+        </div>
+        <div class="logs-list">
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">New user registered — Deaf account created</div><div class="log-time">2 min ago</div></div>
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">Mapping data updated — "Thank you" sign modified</div><div class="log-time">15 min ago</div></div>
+          <div class="log-item"><div class="log-dot log-warn"></div><div class="log-text">Failed login attempt — invalid credentials</div><div class="log-time">1 hr ago</div></div>
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">Translation session completed — 8 signs processed</div><div class="log-time">2 hr ago</div></div>
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">New mapping added — "Good morning" sign</div><div class="log-time">3 hr ago</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MANAGE USERS ── -->
+    <div class="section" id="section-users">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Manage Users</div>
+          <div class="card-badge badge-sage">48 Total</div>
+        </div>
+        <div class="search-bar">
+          <input class="search-input" placeholder="Search by name or email..." oninput="filterUsers(this.value)"/>
+          <select class="filter-select" onchange="filterByRole(this.value)">
+            <option value="all">All Roles</option>
+            <option value="deaf">Deaf Users</option>
+            <option value="hearing">Hearing Users</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table id="users-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr data-role="deaf">
+                <td><div class="user-cell"><div class="user-av av-deaf">🧏</div>John Doe</div></td>
+                <td>john@email.com</td>
+                <td><span class="role-badge role-deaf">Deaf</span></td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>Jan 12, 2026</td>
+                <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+              </tr>
+              <tr data-role="hearing">
+                <td><div class="user-cell"><div class="user-av av-hearing">🗣️</div>Sarah Smith</div></td>
+                <td>sarah@email.com</td>
+                <td><span class="role-badge role-hearing">Hearing</span></td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>Jan 15, 2026</td>
+                <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+              </tr>
+              <tr data-role="deaf">
+                <td><div class="user-cell"><div class="user-av av-deaf">🧏</div>Ali Hassan</div></td>
+                <td>ali@email.com</td>
+                <td><span class="role-badge role-deaf">Deaf</span></td>
+                <td><span class="status-badge status-inactive">Inactive</span></td>
+                <td>Feb 03, 2026</td>
+                <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+              </tr>
+              <tr data-role="hearing">
+                <td><div class="user-cell"><div class="user-av av-hearing">🗣️</div>Marie Dupont</div></td>
+                <td>marie@email.com</td>
+                <td><span class="role-badge role-hearing">Hearing</span></td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>Feb 20, 2026</td>
+                <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MAPPING DATA ── -->
+    <div class="section" id="section-mapping">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Manage Mapping Data</div>
+          <div class="card-badge badge-rose">124 Signs</div>
+        </div>
+        <div class="add-form">
+          <input class="add-input" id="sign-id" placeholder="Sign ID (e.g. ASL_001)"/>
+          <input class="add-input" id="sign-gesture" placeholder="Gesture name"/>
+          <input class="add-input" id="sign-meaning" placeholder="Meaning (e.g. Hello)"/>
+          <input class="add-input" id="sign-video" placeholder="Video file (e.g. hello.mp4)"/>
+          <button class="btn-add" onclick="addMapping()">+ Add Sign</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sign ID</th>
+                <th>Gesture</th>
+                <th>Meaning</th>
+                <th>Video File</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="mapping-tbody">
+              <tr>
+                <td>ASL_001</td><td>✋ Open Hand</td><td>Hello</td><td>hello.mp4</td>
+                <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+              </tr>
+              <tr>
+                <td>ASL_002</td><td>👍 Thumb Up</td><td>Good / Yes</td><td>good.mp4</td>
+                <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+              </tr>
+              <tr>
+                <td>ASL_003</td><td>🤝 Handshake</td><td>Thank you</td><td>thankyou.mp4</td>
+                <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+              </tr>
+              <tr>
+                <td>ASL_004</td><td>✌️ Two Fingers</td><td>Peace / Bye</td><td>bye.mp4</td>
+                <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MONITOR SYSTEM ── -->
+    <div class="section" id="section-monitor">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-info"><div class="stat-num">99%</div><div class="stat-label">System Uptime</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-info"><div class="stat-num">342</div><div class="stat-label">Translations Today</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-info"><div class="stat-num">2</div><div class="stat-label">Warnings</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">❌</div>
+          <div class="stat-info"><div class="stat-num">0</div><div class="stat-label">Errors</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">System Logs</div>
+          <div class="card-badge badge-sage">● Live</div>
+        </div>
+        <div class="logs-list">
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">[INFO] MediaPipe initialized successfully</div><div class="log-time">14:32:01</div></div>
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">[INFO] User john@email.com authenticated</div><div class="log-time">14:28:45</div></div>
+          <div class="log-item"><div class="log-dot log-warn"></div><div class="log-text">[WARN] Speech API response time exceeded 3s</div><div class="log-time">14:15:30</div></div>
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">[INFO] Sign ASL_003 recognized — confidence 94%</div><div class="log-time">14:10:12</div></div>
+          <div class="log-item"><div class="log-dot log-warn"></div><div class="log-text">[WARN] Failed login attempt from unknown IP</div><div class="log-time">13:55:08</div></div>
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">[INFO] Database backup completed successfully</div><div class="log-time">13:00:00</div></div>
+          <div class="log-item"><div class="log-dot log-info"></div><div class="log-text">[INFO] 342 translation sessions processed today</div><div class="log-time">12:00:00</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONSULT DATA ── -->
+    <div class="section" id="section-consult">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Consult User Info</div>
+          <div class="card-badge badge-rose">Read Only</div>
+        </div>
+        <div class="search-bar">
+          <input class="search-input" placeholder="Search user by name or email..."/>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>User</th><th>Email</th><th>Role</th><th>Total Translations</th><th>Last Active</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><div class="user-cell"><div class="user-av av-deaf">🧏</div>John Doe</div></td><td>john@email.com</td><td><span class="role-badge role-deaf">Deaf</span></td><td>142</td><td>Today, 14:30</td></tr>
+              <tr><td><div class="user-cell"><div class="user-av av-hearing">🗣️</div>Sarah Smith</div></td><td>sarah@email.com</td><td><span class="role-badge role-hearing">Hearing</span></td><td>96</td><td>Today, 11:45</td></tr>
+              <tr><td><div class="user-cell"><div class="user-av av-deaf">🧏</div>Ali Hassan</div></td><td>ali@email.com</td><td><span class="role-badge role-deaf">Deaf</span></td><td>58</td><td>Yesterday</td></tr>
+              <tr><td><div class="user-cell"><div class="user-av av-hearing">🗣️</div>Marie Dupont</div></td><td>marie@email.com</td><td><span class="role-badge role-hearing">Hearing</span></td><td>34</td><td>Feb 28, 2026</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Consult Mapping Data</div>
+          <div class="card-badge badge-sage">124 Signs</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Sign ID</th><th>Gesture</th><th>Meaning</th><th>Times Used</th><th>Last Updated</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ASL_001</td><td>✋ Open Hand</td><td>Hello</td><td>1,248</td><td>Jan 10, 2026</td></tr>
+              <tr><td>ASL_002</td><td>👍 Thumb Up</td><td>Good / Yes</td><td>986</td><td>Jan 15, 2026</td></tr>
+              <tr><td>ASL_003</td><td>🤝 Handshake</td><td>Thank you</td><td>742</td><td>Feb 01, 2026</td></tr>
+              <tr><td>ASL_004</td><td>✌️ Two Fingers</td><td>Peace / Bye</td><td>534</td><td>Feb 10, 2026</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const titles = {
+    overview: 'Overview — <span>Admin Panel</span>',
+    users:    'Manage <span>Users</span>',
+    mapping:  'Mapping <span>Data</span>',
+    monitor:  'Monitor <span>System</span>',
+    consult:  'Consult <span>Data</span>',
+    settings: 'Account <span>Settings</span>',
+  };
+
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const sec = document.getElementById('section-' + name);
+    if (sec) sec.classList.add('active');
+    event.currentTarget.classList.add('active');
+    document.getElementById('page-title').innerHTML = titles[name] || name;
+  }
+
+  function deleteRow(btn) {
+    if (confirm('Are you sure you want to delete this entry?')) {
+      btn.closest('tr').remove();
+    }
+  }
+
+  function addMapping() {
+    const id      = document.getElementById('sign-id').value.trim();
+    const gesture = document.getElementById('sign-gesture').value.trim();
+    const meaning = document.getElementById('sign-meaning').value.trim();
+    const video   = document.getElementById('sign-video').value.trim();
+    if (!id || !gesture || !meaning) { alert('Please fill in Sign ID, Gesture and Meaning.'); return; }
+    const tbody = document.getElementById('mapping-tbody');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${id}</td><td>${gesture}</td><td>${meaning}</td><td>${video || '—'}</td>
+      <td><div class="action-group"><button class="btn-sm btn-edit">Edit</button><button class="btn-sm btn-del" onclick="deleteRow(this)">Delete</button></div></td>
+    `;
+    tbody.insertBefore(row, tbody.firstChild);
+    ['sign-id','sign-gesture','sign-meaning','sign-video'].forEach(i => document.getElementById(i).value = '');
+  }
+
+  function filterUsers(val) {
+    document.querySelectorAll('#users-tbody tr').forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  function filterByRole(role) {
+    document.querySelectorAll('#users-tbody tr').forEach(row => {
+      row.style.display = (role === 'all' || row.dataset.role === role) ? '' : 'none';
+    });
+  }
+</script>
+</body>
+</html>
