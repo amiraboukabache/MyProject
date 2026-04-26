@@ -120,13 +120,6 @@
     .btn-cam-go:hover { background: var(--sage-lt); }
     .btn-cam-cancel { background: rgba(107,30,46,0.08); color: var(--burg); }
 
-    .text-row { display: flex; gap: 10px; align-items: flex-end; }
-    .msg-textarea { flex: 1; padding: 12px 15px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--ink); background: var(--cream); resize: none; outline: none; transition: border-color .2s; height: 48px; max-height: 120px; }
-    .msg-textarea:focus { border-color: var(--sage); }
-    .btn-send { width: 48px; height: 48px; border-radius: 12px; border: none; cursor: pointer; background: var(--ink); color: var(--white); display: flex; align-items: center; justify-content: center; transition: background .2s; flex-shrink: 0; }
-    .btn-send:hover { background: #2e3048; }
-    .btn-send svg { width: 18px; height: 18px; fill: none; stroke: white; stroke-width: 2; }
-
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: rgba(107,122,94,0.25); border-radius: 10px; }
   </style>
@@ -224,10 +217,6 @@
           <svg viewBox="0 0 24 24"><path d="M21 6.5c0-1.1-.9-2-2-2h-2V3c0-1.1-.9-2-2-2s-2 .9-2 2v1H9V3c0-1.1-.9-2-2-2S5 1.9 5 3v1.5H3c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6.5z"/></svg>
           Sign (Camera)
         </button>
-        <button class="imt" onclick="setMode('text', this)">
-          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-          Type
-        </button>
       </div>
 
       <div class="input-panel visible" id="panel-sign">
@@ -242,15 +231,6 @@
         <div class="cam-actions">
           <button class="btn-cam btn-cam-go" id="cam-btn" onclick="toggleCamera()">Start Camera</button>
           <button class="btn-cam btn-cam-cancel" onclick="cancelCamera()">Cancel</button>
-        </div>
-      </div>
-
-      <div class="input-panel" id="panel-text">
-        <div class="text-row">
-          <textarea class="msg-textarea" id="text-input" placeholder="Type your message..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-          <button class="btn-send" onclick="sendTextMsg()">
-            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-          </button>
         </div>
       </div>
     </div>
@@ -417,15 +397,6 @@
     await saveMessage(text, 'sign');
   }
 
-  async function sendTextMsg() {
-    const ta = document.getElementById('text-input');
-    const text = ta.value.trim();
-    if (!text) return;
-    appendMsg('text', text, true);
-    ta.value = '';
-    ta.style.height = '48px';
-    await saveMessage(text, 'text');
-  }
 
   async function saveMessage(content, type, mediaUrl = null) {
     if (!currentReceiverId) return;
@@ -499,14 +470,7 @@
     } catch (e) { console.error('Error loading history:', e); }
   }
 
-  function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTextMsg(); }
-  }
 
-  function autoResize(el) {
-    el.style.height = '48px';
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-  }
 
   // Load users on start
   loadUsers();
