@@ -129,15 +129,46 @@
     .footer-logo span { color: var(--rose); }
     footer p { font-size: 13px; color: rgba(255,255,255,0.3); }
 
+    /* NAV MOBILE */
+    .nav-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+    .nav-toggle span { display: block; width: 24px; height: 2px; background: var(--dark); border-radius: 2px; transition: all .3s; }
+
     @media (max-width: 900px) {
-      nav { padding: 16px 24px; }
-      .hero { grid-template-columns: 1fr; padding: 100px 24px 60px; }
-      .steps, .users-grid { grid-template-columns: 1fr; }
-      .helps-grid { grid-template-columns: 1fr; }
-      .stats-bar { gap: 32px; flex-wrap: wrap; padding: 32px 24px; }
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: rgba(241,241,232,0.98); backdrop-filter: blur(14px); padding: 16px 20px 24px; border-bottom: 1px solid rgba(129,131,98,0.15); gap: 16px; }
+      .nav-links.open { display: flex; }
+      .nav-links a { font-size: 15px; padding: 4px 0; }
+      .nav-cta { width: fit-content; }
+      .nav-toggle { display: flex; }
+
+      .hero { grid-template-columns: 1fr; padding: 90px 20px 50px; gap: 30px; text-align: center; }
+      .hero-badge { margin: 0 auto; }
+      .hero-desc { margin: 0 auto; }
+      .hero-btns { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+
+      .stats-bar { gap: 20px; flex-wrap: wrap; padding: 28px 20px; justify-content: center; }
+      .stat-num { font-size: 28px; }
+
+      .section { padding: 50px 20px; }
+      .helps-section { padding: 50px 20px; }
+      .steps { grid-template-columns: 1fr; gap: 16px; }
+      .helps-grid { grid-template-columns: 1fr; gap: 16px; }
+      .users-grid { grid-template-columns: 1fr; gap: 16px; }
+
+      .help-card { flex-direction: column; gap: 16px; padding: 24px; }
+
+      .cta-section { padding: 50px 20px; }
+      .cta-section h2 { font-size: 28px; }
       .cta-btns { flex-direction: column; align-items: center; }
-      footer { flex-direction: column; gap: 12px; text-align: center; padding: 32px 24px; }
-      .section { padding: 60px 24px; }
+      .btn-white, .btn-outline-white { width: 100%; text-align: center; }
+
+      footer { flex-direction: column; gap: 10px; text-align: center; padding: 24px 20px; }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 32px; }
+      .section-title { font-size: 26px; }
     }
   </style>
 </head>
@@ -151,12 +182,15 @@
     </div>
     Bridge<span class="logo-dot">Sign</span>
   </a>
-  <div class="nav-links">
+  <div class="nav-links" id="nav-links">
     <a href="#">Home</a>
     <a href="#how">How it works</a>
     <a href="#users">For Who</a>
     <a href="login.html" class="nav-cta">Get Started</a>
   </div>
+  <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <!-- HERO -->
@@ -324,5 +358,10 @@
   <p>© 2026 BridgeSign · University of Constantine 2 · L3-SI · Dr. Bouleghlimat</p>
 </footer>
 
+<script>
+  function toggleNav() {
+    document.getElementById('nav-links').classList.toggle('open');
+  }
+</script>
 </body>
 </html>
