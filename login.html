@@ -90,7 +90,16 @@
     @media (max-width: 900px) {
       body { flex-direction: column; }
       .left-panel { display: none; }
-      .right-panel { padding: 40px 24px; }
+      .right-panel { padding: 40px 24px; min-height: 100vh; }
+      .form-container { max-width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .right-panel { padding: 30px 16px; }
+      .form-title { font-size: 26px; }
+      .form-row { grid-template-columns: 1fr; }
+      .role-selector { grid-template-columns: 1fr; }
+      .tabs { margin-bottom: 28px; }
     }
   </style>
 </head>
@@ -335,7 +344,7 @@
       const data = await res.json();
 
       if (!res.ok) {
-        showError('register-error', data.error || data.details?.message || data.details || 'Registration failed. Please try again.');
+        showError('register-error', data.error || 'Registration failed. Please try again.');
         return;
       }
 
