@@ -335,7 +335,7 @@
       const data = await res.json();
 
       if (!res.ok) {
-        showError('register-error', data.error || 'Registration failed. Please try again.');
+        showError('register-error', data.error || data.details?.message || data.details || 'Registration failed. Please try again.');
         return;
       }
 
