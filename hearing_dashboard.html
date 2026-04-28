@@ -526,6 +526,45 @@
   }
 
   loadUsers();
+
+// REQUEST NOTIFICATION PERMISSION
+if ('Notification' in window) {
+  Notification.requestPermission().then(permission => {
+    console.log('Notification permission:', permission);
+  });
+}
+
+// GLOBAL POLLING FOR NEW MESSAGES
+let knownIds = new Set();
+let firstLoad = true;
+
+setInterval(async () => {
+  try {
+    const res = await fetch(`${API}/messages/history`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const msgs = await res.json();
+    if (!Array.isArray(msgs)) return;
+
+    msgs.forEach(m => {
+      if (!knownIds.has(m.message_id)) {
+        knownIds.add(m.message_id);
+        if (!firstLoad && m.sender_id !== profile.user_id) {
+          if (Notification.permission === 'granted') {
+            new Notification('BridgeSign — New Message', {
+              body: m.content || 'New sign message',
+            });
+          }
+          // Refresh conversation if open
+          if (currentReceiverId === m.sender_id) {
+            loadConversation(m.sender_id);
+          }
+        }
+      }
+    });
+    firstLoad = false;
+  } catch (e) {}
+}, 4000);
   requestNotifPermission();
   startPolling();
 </script>
