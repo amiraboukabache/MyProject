@@ -220,7 +220,7 @@
           <video id="cam-feed" autoplay playsinline muted></video>
           <div class="cam-placeholder" id="cam-ph">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-            <p>Camera off ! press Start to capture your sign</p>
+            <p>Camera off — press Start to capture your sign</p>
           </div>
           <div class="rec-badge" id="rec-badge"><div class="rec-dot"></div> REC</div>
         </div>
@@ -474,6 +474,7 @@
   // ── NOTIFICATIONS + POLLING ──────────────────────────
   let lastMessageCount = 0;
   let pollTimer = null;
+  let knownMessageIds = new Set();
 
   async function requestNotifPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -491,26 +492,42 @@
   }
 
   async function pollMessages() {
-    if (!currentReceiverId) return;
     try {
-      const res = await fetch(`${API}/messages/${currentReceiverId}`, {
+      // Global poll — check all messages received
+      const res = await fetch(`${API}/messages/history`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const messages = await res.json();
       if (!Array.isArray(messages)) return;
-      if (messages.length > lastMessageCount) {
-        const newMsgs = messages.slice(lastMessageCount);
-        newMsgs.forEach(m => {
-          if (m.sender_id !== profile.user_id) {
-            showNotif(currentReceiverName || 'Hearing User', m.content);
+
+      // Find new messages received by me
+      messages.forEach(m => {
+        if (m.sender_id !== profile.user_id && !knownMessageIds.has(m.message_id)) {
+          knownMessageIds.add(m.message_id);
+          // Only notify if it's a truly new message (not on first load)
+          if (knownMessageIds.size > 1 || messages.length === 1) {
+            showNotif('Hearing User', m.content);
           }
+        } else {
+          knownMessageIds.add(m.message_id);
+        }
+      });
+
+      // If conversation open, refresh it silently
+      if (currentReceiverId) {
+        const convRes = await fetch(`${API}/messages/${currentReceiverId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        const container = document.getElementById('chat-messages');
-        const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
-        container.innerHTML = '';
-        messages.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url));
-        if (atBottom) container.scrollTop = container.scrollHeight;
-        lastMessageCount = messages.length;
+        const convMsgs = await convRes.json();
+        if (!Array.isArray(convMsgs)) return;
+        if (convMsgs.length > lastMessageCount) {
+          const container = document.getElementById('chat-messages');
+          const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+          container.innerHTML = '';
+          convMsgs.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url));
+          if (atBottom) container.scrollTop = container.scrollHeight;
+          lastMessageCount = convMsgs.length;
+        }
       }
     } catch (e) {}
   }
@@ -523,6 +540,7 @@
   // Load users on start
   loadUsers();
   requestNotifPermission();
+  startPolling(); // Start polling immediately — not waiting for conversation selection
 </script>
 </body>
 </html>

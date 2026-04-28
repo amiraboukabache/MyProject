@@ -467,6 +467,7 @@
   // ── NOTIFICATIONS + POLLING ──────────────────────────
   let lastMessageCount = 0;
   let pollTimer = null;
+  let knownMessageIds = new Set();
 
   async function requestNotifPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -484,28 +485,37 @@
   }
 
   async function pollMessages() {
-    if (!currentReceiverId) return;
     try {
-      const res = await fetch(`${API}/messages/${currentReceiverId}`, {
+      const res = await fetch(`${API}/messages/history`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const messages = await res.json();
       if (!Array.isArray(messages)) return;
 
-      if (messages.length > lastMessageCount) {
-        const newMsgs = messages.slice(lastMessageCount);
-        newMsgs.forEach(m => {
-          if (m.sender_id !== profile.user_id) {
-            showNotif(currentReceiverName || 'Deaf User', m.content);
+      const isFirstLoad = knownMessageIds.size === 0;
+      messages.forEach(m => {
+        if (!knownMessageIds.has(m.message_id)) {
+          knownMessageIds.add(m.message_id);
+          if (!isFirstLoad && m.sender_id !== profile.user_id) {
+            showNotif('Deaf User', m.content);
           }
+        }
+      });
+
+      if (currentReceiverId) {
+        const convRes = await fetch(`${API}/messages/${currentReceiverId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        // Reload conversation silently
-        const container = document.getElementById('chat-messages');
-        const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
-        container.innerHTML = '';
-        messages.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url));
-        if (atBottom) container.scrollTop = container.scrollHeight;
-        lastMessageCount = messages.length;
+        const convMsgs = await convRes.json();
+        if (!Array.isArray(convMsgs)) return;
+        if (convMsgs.length > lastMessageCount) {
+          const container = document.getElementById('chat-messages');
+          const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+          container.innerHTML = '';
+          convMsgs.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url));
+          if (atBottom) container.scrollTop = container.scrollHeight;
+          lastMessageCount = convMsgs.length;
+        }
       }
     } catch (e) {}
   }
@@ -517,6 +527,7 @@
 
   loadUsers();
   requestNotifPermission();
+  startPolling();
 </script>
 </body>
 </html>
