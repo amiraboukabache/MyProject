@@ -140,10 +140,6 @@
       <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
       Messages
     </a>
-    <a class="nav-link" href="#" onclick="loadHistory()">
-      <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-      History
-    </a>
   </nav>
   <div class="sb-section">Account</div>
   <nav class="nav">
@@ -224,7 +220,7 @@
           <video id="cam-feed" autoplay playsinline muted></video>
           <div class="cam-placeholder" id="cam-ph">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-            <p>Camera off — press Start to capture your sign</p>
+            <p>Camera off ! press Start to capture your sign</p>
           </div>
           <div class="rec-badge" id="rec-badge"><div class="rec-dot"></div> REC</div>
         </div>
@@ -316,9 +312,12 @@
 
     // Show input bar
     document.getElementById('chat-input-area').style.display = 'block';
+    document.getElementById('chat-area').classList.add('mobile-open');
 
-    // Load conversation
+    // Load conversation + start polling
+    lastMessageCount = 0;
     loadConversation(userId);
+    startPolling();
   }
 
   async function loadConversation(userId) {
@@ -472,8 +471,58 @@
 
 
 
+  // ── NOTIFICATIONS + POLLING ──────────────────────────
+  let lastMessageCount = 0;
+  let pollTimer = null;
+
+  async function requestNotifPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }
+
+  function showNotif(senderName, text) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(`New message from ${senderName}`, {
+        body: text.length > 60 ? text.substring(0, 60) + '...' : text,
+        icon: 'https://mellow-malabi-861e60.netlify.app/favicon.ico'
+      });
+    }
+  }
+
+  async function pollMessages() {
+    if (!currentReceiverId) return;
+    try {
+      const res = await fetch(`${API}/messages/${currentReceiverId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const messages = await res.json();
+      if (!Array.isArray(messages)) return;
+      if (messages.length > lastMessageCount) {
+        const newMsgs = messages.slice(lastMessageCount);
+        newMsgs.forEach(m => {
+          if (m.sender_id !== profile.user_id) {
+            showNotif(currentReceiverName || 'Hearing User', m.content);
+          }
+        });
+        const container = document.getElementById('chat-messages');
+        const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+        container.innerHTML = '';
+        messages.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url));
+        if (atBottom) container.scrollTop = container.scrollHeight;
+        lastMessageCount = messages.length;
+      }
+    } catch (e) {}
+  }
+
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(pollMessages, 4000);
+  }
+
   // Load users on start
   loadUsers();
+  requestNotifPermission();
 </script>
 </body>
 </html>
