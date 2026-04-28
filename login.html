@@ -310,6 +310,15 @@
       const profile = await profileRes.json();
       localStorage.setItem('bs_profile', JSON.stringify(profile));
 
+
+
+await fetch(`${API}/activity`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${data.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'login' })
+});
+
+
       goToDashboard(profile.role);
 
     } catch (e) {
@@ -369,7 +378,11 @@ await fetch(`${API}/account`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${loginData.access_token}` }
 });
-
+           await fetch(`${API}/activity`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${data.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'login' })
+});
         goToDashboard(selectedRole);
       }
 
