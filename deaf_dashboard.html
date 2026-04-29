@@ -95,24 +95,25 @@
     .msg-media video, .msg-media img { width: 100%; border-radius: 12px; display: block; }
     .msg-meta { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
 
-    /* DELETE BUTTON — show on hover */
+    /* DELETE BUTTON — toggled via JS click, not CSS hover */
     .delete-btn {
       display: none;
       position: absolute;
       top: 4px;
-      background: none;
-      border: none;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(192,57,43,0.25);
+      border-radius: 6px;
       cursor: pointer;
-      padding: 4px;
-      opacity: 0.6;
-      transition: opacity .2s;
-      z-index: 10;
+      padding: 5px;
+      opacity: 1;
+      z-index: 20;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
     }
-    .from-me .delete-btn { right: -28px; }
-    .from-them .delete-btn { left: -28px; right: auto; }
-    .delete-btn:hover { opacity: 1; }
-    .delete-btn svg { width: 14px; height: 14px; fill: none; stroke: #c0392b; stroke-width: 2; }
-    .msg:hover .delete-btn { display: block; }
+    .from-me .delete-btn { right: -34px; }
+    .from-them .delete-btn { left: -34px; right: auto; }
+    .delete-btn svg { width: 14px; height: 14px; fill: none; stroke: #c0392b; stroke-width: 2; display: block; }
+    .delete-btn:hover { background: rgba(192,57,43,0.1); }
+    .msg.show-delete .delete-btn { display: block; }
 
     /* INPUT BAR */
     .chat-input-area { background: var(--white); border-top: 1px solid var(--border); padding: 16px 24px; flex-shrink: 0; }
@@ -311,14 +312,6 @@
           <svg viewBox="0 0 24 24"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>
           Sign (Camera)
         </button>
-        <button class="imt" id="tab-video" onclick="setMode('video', this)">
-          <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-          Record Video
-        </button>
-        <button class="imt" id="tab-photo" onclick="setMode('photo', this)">
-          <svg viewBox="0 0 24 24"><path d="M12 15.2c-1.77 0-3.2-1.43-3.2-3.2S10.23 8.8 12 8.8s3.2 1.43 3.2 3.2-1.43 3.2-3.2 3.2zM9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9z"/></svg>
-          Take Photo
-        </button>
         <button class="imt" id="tab-text" onclick="setMode('text', this)">
           <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
           Type
@@ -339,45 +332,6 @@
           <button class="btn-cam btn-cam-go" id="sign-btn" onclick="toggleSignCamera()">Start Camera</button>
           <button class="btn-cam btn-cam-cancel" onclick="cancelSignCamera()">Cancel</button>
           <button class="btn-cam btn-cam-send" id="sign-send-btn" onclick="sendSignMessage()">Send Sign</button>
-        </div>
-      </div>
-
-      <!-- VIDEO RECORD PANEL -->
-      <div class="input-panel" id="panel-video">
-        <div class="cam-view" id="video-cam-view">
-          <video id="video-feed" autoplay playsinline muted></video>
-          <div class="cam-placeholder" id="video-ph">
-            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-            <p>Press Start to record a video</p>
-          </div>
-          <div class="rec-badge" id="video-rec-badge"><div class="rec-dot"></div> REC</div>
-          <div class="mode-badge" id="video-time-badge">0s</div>
-        </div>
-        <div class="cam-actions">
-          <button class="btn-cam btn-cam-go" id="video-btn" onclick="toggleVideoRecord()">Start Recording</button>
-          <button class="btn-cam btn-cam-cancel" onclick="cancelVideo()">Cancel</button>
-          <button class="btn-cam btn-cam-send" id="video-send-btn" onclick="sendRecordedVideo()">Send Video</button>
-        </div>
-      </div>
-
-      <!-- PHOTO PANEL -->
-      <div class="input-panel" id="panel-photo">
-        <div class="cam-view" id="photo-cam-view">
-          <video id="photo-feed" autoplay playsinline muted></video>
-          <canvas id="photo-canvas" style="display:none"></canvas>
-          <img id="photo-preview" class="snapshot-preview" alt="snapshot"/>
-          <div class="cam-placeholder" id="photo-ph">
-            <svg viewBox="0 0 24 24"><path d="M12 15.2c-1.77 0-3.2-1.43-3.2-3.2S10.23 8.8 12 8.8s3.2 1.43 3.2 3.2-1.43 3.2-3.2 3.2zM9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9z"/></svg>
-            <p>Press Open Camera then Take Photo</p>
-          </div>
-          <div class="mode-badge" id="photo-mode-badge" style="display:none">📷 CAMERA LIVE</div>
-        </div>
-        <div class="cam-actions">
-          <button class="btn-cam btn-cam-go" id="photo-start-btn" onclick="startPhotoCamera()">Open Camera</button>
-          <button class="btn-cam btn-cam-snap" id="photo-snap-btn" style="display:none" onclick="takePhoto()">📷 Take Photo</button>
-          <button class="btn-cam btn-cam-retake" id="photo-retake-btn" onclick="retakePhoto()">Retake</button>
-          <button class="btn-cam btn-cam-send" id="photo-send-btn" onclick="sendPhoto()">Send Photo</button>
-          <button class="btn-cam btn-cam-cancel" onclick="cancelPhoto()">Cancel</button>
         </div>
       </div>
 
@@ -416,20 +370,6 @@
   // Sign camera state
   let signStream = null;
   let signActive = false;
-
-  // Video record state
-  let videoStream = null;
-  let mediaRecorder = null;
-  let videoChunks = [];
-  let recordedBlob = null;
-  let videoRecording = false;
-  let videoTimer = null;
-  let videoSeconds = 0;
-
-  // Photo state
-  let photoStream = null;
-  let photoDataUrl = null;
-  let photoCameraOpen = false;
 
   function logout() { localStorage.clear(); }
 
@@ -495,8 +435,6 @@
 
   function stopAllMedia() {
     cancelSignCamera();
-    cancelVideo();
-    cancelPhoto();
   }
 
   // ── CONVERSATION ──────────────────────────────────────
@@ -584,241 +522,6 @@
     await saveMessage(text, 'sign');
   }
 
-  // ── VIDEO RECORD ──────────────────────────────────────
-  async function toggleVideoRecord() {
-    const btn = document.getElementById('video-btn');
-    const ph = document.getElementById('video-ph');
-    const video = document.getElementById('video-feed');
-    const rec = document.getElementById('video-rec-badge');
-    const timeBadge = document.getElementById('video-time-badge');
-    const sendBtn = document.getElementById('video-send-btn');
-
-    if (!videoRecording) {
-      if (!videoStream) {
-        try {
-          videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-          video.srcObject = videoStream;
-          video.style.display = 'block';
-          ph.style.display = 'none';
-        } catch (e) {
-          alert('Camera/microphone access denied.'); return;
-        }
-      }
-      // Start recording
-      videoChunks = [];
-      recordedBlob = null;
-      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-        ? 'video/webm;codecs=vp9'
-        : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
-      mediaRecorder = new MediaRecorder(videoStream, { mimeType });
-      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) videoChunks.push(e.data); };
-      mediaRecorder.onstop = () => {
-        recordedBlob = new Blob(videoChunks, { type: mimeType });
-      };
-      mediaRecorder.start(100);
-      videoRecording = true;
-      videoSeconds = 0;
-      timeBadge.textContent = '0s';
-      timeBadge.style.display = 'flex';
-      rec.style.display = 'flex';
-      btn.textContent = 'Stop Recording';
-      btn.style.background = '#8a2535';
-      sendBtn.style.display = 'none';
-      videoTimer = setInterval(() => {
-        videoSeconds++;
-        timeBadge.textContent = videoSeconds + 's';
-      }, 1000);
-    } else {
-      // Stop recording
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-      }
-      clearInterval(videoTimer);
-      videoRecording = false;
-      rec.style.display = 'none';
-      btn.textContent = 'Record Again';
-      btn.style.background = '';
-      sendBtn.style.display = 'block';
-      timeBadge.style.display = 'none';
-    }
-  }
-
-  async function sendRecordedVideo() {
-    if (!recordedBlob) { alert('No video recorded yet.'); return; }
-    const sendBtn = document.getElementById('video-send-btn');
-    sendBtn.textContent = 'Sending...';
-    sendBtn.disabled = true;
-    try {
-      const formData = new FormData();
-      formData.append('file', recordedBlob, 'sign_video.webm');
-      formData.append('receiver_id', currentReceiverId);
-      formData.append('type', 'video');
-      formData.append('content', 'Video sign message');
-      const res = await fetch(`${API}/messages/upload`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      const data = await res.json();
-      appendMsg('video', 'Video sign message', true, data.media_url || null);
-    } catch (e) {
-      // Fallback: send as sign message if upload not supported
-      appendMsg('sign', 'Video sign message', true);
-      await saveMessage('Video sign message', 'sign');
-    }
-    sendBtn.textContent = 'Send Video';
-    sendBtn.disabled = false;
-    cancelVideo();
-  }
-
-  function cancelVideo() {
-    const video = document.getElementById('video-feed');
-    const ph = document.getElementById('video-ph');
-    const rec = document.getElementById('video-rec-badge');
-    const btn = document.getElementById('video-btn');
-    const timeBadge = document.getElementById('video-time-badge');
-    const sendBtn = document.getElementById('video-send-btn');
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch(e){} }
-    clearInterval(videoTimer);
-    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-    mediaRecorder = null; videoChunks = []; recordedBlob = null; videoRecording = false; videoSeconds = 0;
-    if (video) video.style.display = 'none';
-    if (ph) ph.style.display = 'flex';
-    if (rec) rec.style.display = 'none';
-    if (timeBadge) timeBadge.style.display = 'none';
-    if (btn) { btn.textContent = 'Start Recording'; btn.style.background = ''; }
-    if (sendBtn) sendBtn.style.display = 'none';
-  }
-
-  // ── PHOTO ─────────────────────────────────────────────
-  async function startPhotoCamera() {
-    const video = document.getElementById('photo-feed');
-    const ph = document.getElementById('photo-ph');
-    const startBtn = document.getElementById('photo-start-btn');
-    const snapBtn = document.getElementById('photo-snap-btn');
-    const preview = document.getElementById('photo-preview');
-    const modeBadge = document.getElementById('photo-mode-badge');
-    const retakeBtn = document.getElementById('photo-retake-btn');
-    const sendBtn = document.getElementById('photo-send-btn');
-
-    // If already have a photo, retake
-    if (photoDataUrl) { retakePhoto(); return; }
-
-    if (!photoCameraOpen) {
-      try {
-        photoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = photoStream;
-        video.style.display = 'block';
-        ph.style.display = 'none';
-        preview.style.display = 'none';
-        modeBadge.style.display = 'flex';
-        startBtn.style.display = 'none';
-        snapBtn.style.display = 'block';
-        retakeBtn.style.display = 'none';
-        sendBtn.style.display = 'none';
-        photoCameraOpen = true;
-        photoDataUrl = null;
-      } catch (e) { alert('Camera access denied.'); }
-    }
-  }
-
-  function takePhoto() {
-    const video = document.getElementById('photo-feed');
-    const canvas = document.getElementById('photo-canvas');
-    const preview = document.getElementById('photo-preview');
-    const snapBtn = document.getElementById('photo-snap-btn');
-    const retakeBtn = document.getElementById('photo-retake-btn');
-    const sendBtn = document.getElementById('photo-send-btn');
-    const modeBadge = document.getElementById('photo-mode-badge');
-
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-    // Stop camera, show preview
-    if (photoStream) { photoStream.getTracks().forEach(t => t.stop()); photoStream = null; }
-    video.style.display = 'none';
-    preview.src = photoDataUrl;
-    preview.style.display = 'block';
-    modeBadge.style.display = 'none';
-    snapBtn.style.display = 'none';
-    retakeBtn.style.display = 'block';
-    sendBtn.style.display = 'block';
-    photoCameraOpen = false;
-  }
-
-  function retakePhoto() {
-    const preview = document.getElementById('photo-preview');
-    const retakeBtn = document.getElementById('photo-retake-btn');
-    const sendBtn = document.getElementById('photo-send-btn');
-    const startBtn = document.getElementById('photo-start-btn');
-    const ph = document.getElementById('photo-ph');
-
-    photoDataUrl = null;
-    preview.src = '';
-    preview.style.display = 'none';
-    retakeBtn.style.display = 'none';
-    sendBtn.style.display = 'none';
-    startBtn.style.display = 'block';
-    ph.style.display = 'flex';
-    photoCameraOpen = false;
-  }
-
-  async function sendPhoto() {
-    if (!photoDataUrl) { alert('No photo taken yet.'); return; }
-    const sendBtn = document.getElementById('photo-send-btn');
-    sendBtn.textContent = 'Sending...';
-    sendBtn.disabled = true;
-    try {
-      // Convert dataURL to blob
-      const res = await fetch(photoDataUrl);
-      const blob = await res.blob();
-      const formData = new FormData();
-      formData.append('file', blob, 'sign_photo.jpg');
-      formData.append('receiver_id', currentReceiverId);
-      formData.append('type', 'photo');
-      formData.append('content', 'Photo sign message');
-      const uploadRes = await fetch(`${API}/messages/upload`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      const data = await uploadRes.json();
-      appendMsg('photo', 'Photo sign message', true, data.media_url || photoDataUrl);
-    } catch (e) {
-      // Fallback: show the local photo if upload fails
-      appendMsg('photo', 'Photo sign message', true, photoDataUrl);
-      await saveMessage('Photo sign message', 'photo');
-    }
-    sendBtn.textContent = 'Send Photo';
-    sendBtn.disabled = false;
-    cancelPhoto();
-  }
-
-  function cancelPhoto() {
-    if (photoStream) { photoStream.getTracks().forEach(t => t.stop()); photoStream = null; }
-    const video = document.getElementById('photo-feed');
-    const preview = document.getElementById('photo-preview');
-    const ph = document.getElementById('photo-ph');
-    const startBtn = document.getElementById('photo-start-btn');
-    const snapBtn = document.getElementById('photo-snap-btn');
-    const retakeBtn = document.getElementById('photo-retake-btn');
-    const sendBtn = document.getElementById('photo-send-btn');
-    const modeBadge = document.getElementById('photo-mode-badge');
-    if (video) video.style.display = 'none';
-    if (preview) { preview.src = ''; preview.style.display = 'none'; }
-    if (ph) ph.style.display = 'flex';
-    if (startBtn) startBtn.style.display = 'block';
-    if (snapBtn) snapBtn.style.display = 'none';
-    if (retakeBtn) retakeBtn.style.display = 'none';
-    if (sendBtn) sendBtn.style.display = 'none';
-    if (modeBadge) modeBadge.style.display = 'none';
-    photoDataUrl = null;
-    photoCameraOpen = false;
-  }
-
   // ── TEXT ─────────────────────────────────────────────
   async function sendTextMsg() {
     const ta = document.getElementById('text-input');
@@ -861,6 +564,13 @@
     } catch (e) { alert('Failed to delete message.'); }
   }
 
+  // Click anywhere outside messages to close delete buttons
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.msg')) {
+      document.querySelectorAll('.msg.show-delete').forEach(m => m.classList.remove('show-delete'));
+    }
+  });
+
   // ── APPEND MESSAGE ────────────────────────────────────
   function appendMsg(type, text, fromMe, mediaUrl = null, timestamp = null, messageId = null) {
     const container = document.getElementById('chat-messages');
@@ -874,6 +584,17 @@
     const div = document.createElement('div');
     div.className = 'msg ' + (fromMe ? 'from-me' : 'from-them');
 
+    // Click on message toggles delete button visibility
+    div.addEventListener('click', function(e) {
+      if (e.target.closest('.delete-btn')) return; // let delete btn handle itself
+      if (!messageId) return;
+      // Close all others first
+      document.querySelectorAll('.msg.show-delete').forEach(m => {
+        if (m !== div) m.classList.remove('show-delete');
+      });
+      div.classList.toggle('show-delete');
+    });
+
     const deleteBtn = messageId ? `
       <button class="delete-btn" title="Delete message" onclick="deleteMessage('${messageId}', this.closest('.msg'))">
         <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -886,23 +607,16 @@
           <div class="sign-label"><strong>Sign Message</strong><span>"${text}"</span></div>
         </div>
         <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
-    } else if (type === 'video' || type === 'photo') {
-      const isVideo = type === 'video' || (mediaUrl && mediaUrl.match(/\.(mp4|webm|mov)$/i));
-      const typeLabel = type === 'video' ? '🎥 Video sign message' : '📷 Photo sign message';
-      if (mediaUrl) {
-        div.innerHTML = `
-          <div class="msg-media">
-            ${isVideo
-              ? `<video src="${mediaUrl}" controls style="width:100%;border-radius:12px"></video>`
-              : `<img src="${mediaUrl}" alt="sign photo" style="width:100%;border-radius:12px">`
-            }
-          </div>
-          <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
-      } else {
-        div.innerHTML = `
-          <div class="msg-bubble">${typeLabel}</div>
-          <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
-      }
+    } else if (mediaUrl) {
+      const isVideo = mediaUrl.match(/\.(mp4|webm|mov)$/i);
+      div.innerHTML = `
+        <div class="msg-media">
+          ${isVideo
+            ? `<video src="${mediaUrl}" controls style="width:100%;border-radius:12px"></video>`
+            : `<img src="${mediaUrl}" alt="sign" style="width:100%;border-radius:12px">`
+          }
+        </div>
+        <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
     } else {
       div.innerHTML = `
         <div class="msg-bubble">${text}</div>
