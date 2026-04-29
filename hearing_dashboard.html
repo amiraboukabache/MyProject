@@ -1,4 +1,4 @@
-<!DOCTYPEvhtml>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -15,6 +15,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Outfit', sans-serif; background: var(--cream); color: var(--ink); display: flex; height: 100vh; overflow: hidden; }
 
+    /* SIDEBAR */
     .sidebar { width: var(--sb); background: var(--ink); display: flex; flex-direction: column; padding: 26px 18px; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
     .logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 38px; }
     .logo-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--burg); display: flex; align-items: center; justify-content: center; }
@@ -33,14 +34,17 @@
     .u-name { font-size: 13px; font-weight: 600; color: var(--white); }
     .u-role { font-size: 11px; color: rgba(255,255,255,0.35); }
 
+    /* MAIN */
     .main { margin-left: var(--sb); flex: 1; display: flex; height: 100vh; overflow: hidden; }
 
+    /* USERS PANEL */
     .users-panel { width: 300px; flex-shrink: 0; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
     .users-header { padding: 22px 20px 16px; border-bottom: 1px solid var(--border); }
     .users-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; margin-bottom: 14px; }
     .search-box { display: flex; align-items: center; gap: 9px; background: var(--cream); border-radius: 10px; padding: 9px 13px; }
     .search-box svg { width: 15px; height: 15px; fill: none; stroke: var(--muted); stroke-width: 2; flex-shrink: 0; }
     .search-box input { border: none; background: none; font-size: 13px; font-family: 'Outfit', sans-serif; color: var(--ink); outline: none; flex: 1; }
+    .search-box input::placeholder { color: #bbb; }
     .users-list { flex: 1; overflow-y: auto; }
     .user-item { display: flex; align-items: center; gap: 13px; padding: 14px 18px; cursor: pointer; transition: background .15s; border-bottom: 1px solid rgba(107,122,94,0.07); position: relative; }
     .user-item:hover { background: rgba(107,30,46,0.04); }
@@ -54,6 +58,7 @@
     .no-users svg { width: 36px; height: 36px; fill: none; stroke: var(--ink); stroke-width: 1.5; }
     .no-users p { font-size: 13px; font-weight: 600; }
 
+    /* CHAT AREA */
     .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--cream); min-width: 0; }
     .chat-header { background: var(--white); padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .chat-user-info { display: flex; align-items: center; gap: 13px; }
@@ -64,6 +69,7 @@
     .icon-btn:hover { background: rgba(107,122,94,0.15); }
     .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: var(--ink); stroke-width: 1.8; }
 
+    /* MESSAGES */
     .chat-messages { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
     .select-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
     .select-state svg { width: 64px; height: 64px; fill: none; stroke: rgba(107,30,46,0.25); stroke-width: 1.2; }
@@ -73,7 +79,8 @@
     .empty-state svg { width: 52px; height: 52px; fill: none; stroke: var(--ink); stroke-width: 1.2; }
     .empty-state p { font-size: 15px; font-weight: 600; }
 
-    .msg { display: flex; flex-direction: column; max-width: 68%; }
+    /* MESSAGE BUBBLES */
+    .msg { display: flex; flex-direction: column; max-width: 68%; position: relative; }
     .msg.from-me { align-self: flex-end; align-items: flex-end; }
     .msg.from-them { align-self: flex-start; align-items: flex-start; }
     .msg-bubble { padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.6; }
@@ -84,16 +91,29 @@
     .sign-label strong { display: block; font-size: 13px; font-weight: 600; }
     .sign-label span { font-size: 12px; color: var(--muted); }
     .msg-meta { font-size: 11px; color: var(--muted); margin-top: 5px; }
-    .msg { position: relative; }
-    .delete-btn { display: none; position: absolute; top: 0; right: -28px; background: none; border: none; cursor: pointer; padding: 4px; opacity: 0.5; transition: opacity .2s; }
+
+    /* DELETE BUTTON — fixed: show on hover of parent .msg */
+    .delete-btn {
+      display: none;
+      position: absolute;
+      top: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      opacity: 0.6;
+      transition: opacity .2s;
+      z-index: 10;
+    }
     .from-me .delete-btn { right: -28px; }
     .from-them .delete-btn { left: -28px; right: auto; }
     .delete-btn:hover { opacity: 1; }
     .delete-btn svg { width: 14px; height: 14px; fill: none; stroke: #c0392b; stroke-width: 2; }
-    .delete-btn { display: none; position: absolute; top: 0; right: -28px; z-index: 10; }
-    .delete-btn:hover { display: block !important; }
+    .msg:hover .delete-btn { display: block; }
+
+    /* INPUT AREA */
     .chat-input-area { background: var(--white); border-top: 1px solid var(--border); padding: 16px 24px; flex-shrink: 0; }
-    .input-mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .input-mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
     .imt { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 50px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; border: 1.5px solid var(--border); background: var(--cream); color: var(--muted); font-family: 'Outfit', sans-serif; }
     .imt svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; }
     .imt:hover { border-color: var(--burg); color: var(--burg); }
@@ -138,15 +158,11 @@
       .mobile-topbar-name { font-size: 12px; color: rgba(255,255,255,0.5); }
       .mobile-logout { background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; font-family: 'Outfit', sans-serif; }
 
-      /* Users panel shown by default */
-      .users-panel { width: 100%; flex: 1; border-right: none; overflow: hidden; }
+      .users-panel { width: 100%; flex: 1; border-right: none; overflow: hidden; display: flex; flex-direction: column; }
       .users-header { padding: 14px 16px 10px; }
       .users-list { flex: 1; overflow-y: auto; }
 
-      /* Chat area hidden by default on mobile */
       .chat-area { display: none; position: fixed; inset: 0; z-index: 40; flex-direction: column; background: var(--cream); }
-
-      /* When a user is selected on mobile */
       .chat-area.mobile-open { display: flex; }
 
       .back-btn {
@@ -162,6 +178,17 @@
       .chat-input-area { padding: 10px 14px; }
       .msg { max-width: 85%; }
       .voice-view { height: 75px; }
+
+      /* On mobile, delete buttons inside the bubble row */
+      .from-me .delete-btn { right: -24px; }
+      .from-them .delete-btn { left: -24px; }
+    }
+
+    @media (max-width: 480px) {
+      .msg { max-width: 90%; }
+      .input-mode-tabs { gap: 6px; }
+      .imt { padding: 7px 10px; font-size: 11px; }
+      .chat-input-area { padding: 8px 12px; }
     }
   </style>
 </head>
@@ -350,26 +377,31 @@
     document.getElementById('chat-contact-name').textContent = userName;
     document.getElementById('chat-status').textContent = 'Deaf User';
     document.getElementById('chat-input-area').style.display = 'block';
-    // On mobile: show chat area
     document.getElementById('chat-area').classList.add('mobile-open');
     lastMessageCount = 0;
+    cancelVoice();
     loadConversation(userId);
     startPolling();
   }
 
   async function loadConversation(userId) {
     const container = document.getElementById('chat-messages');
-    container.innerHTML = '';
+    // Clear chat fully before loading new conversation
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Loading...</div>';
     try {
       const res = await fetch(`${API}/messages/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
       const messages = await res.json();
+      container.innerHTML = '';
       if (!Array.isArray(messages) || !messages.length) {
-        container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><p>No messages yet</p></div>`;
+        container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><p>No history available</p></div>`;
         return;
       }
       messages.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url, m.date, m.message_id));
       container.scrollTop = container.scrollHeight;
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state"><p>Failed to load conversation</p></div>`;
+      console.error(e);
+    }
   }
 
   function setMode(mode, btn) {
@@ -384,7 +416,7 @@
     const btn = document.getElementById('voice-btn');
     const status = document.getElementById('voice-status');
     if (!isRecording) {
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('Use Chrome for voice.'); return; }
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('Use Chrome for voice recognition.'); return; }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SR();
       recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = false;
@@ -400,7 +432,8 @@
       };
       recognition.onerror = () => cancelVoice();
       recognition.start();
-      isRecording = true; btn.textContent = 'Stop Recording'; status.textContent = 'Listening...';
+      isRecording = true; btn.textContent = 'Stop Recording'; btn.style.background = '#8a2535';
+      status.textContent = 'Listening...';
     } else cancelVoice();
   }
 
@@ -409,21 +442,21 @@
     isRecording = false;
     const btn = document.getElementById('voice-btn');
     const status = document.getElementById('voice-status');
-    if (btn) btn.textContent = 'Record Voice';
+    if (btn) { btn.textContent = 'Record Voice'; btn.style.background = ''; }
     if (status) status.textContent = 'Press Record to start speaking';
   }
 
   async function sendTextMsg() {
     const ta = document.getElementById('text-input');
     const text = ta.value.trim();
-    if (!text) return;
+    if (!text || !currentReceiverId) return;
+    ta.value = ''; ta.style.height = '48px';
     try {
       const mapRes = await fetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`, { headers: { 'Authorization': `Bearer ${token}` } });
       const mapData = await mapRes.json();
       appendMsg('text', text, true, mapData.content_url || null);
       await saveMessage(text, 'text', mapData.content_url || null);
     } catch { appendMsg('text', text, true); await saveMessage(text, 'text'); }
-    ta.value = ''; ta.style.height = '48px';
   }
 
   async function saveMessage(content, type, mediaUrl = null) {
@@ -453,13 +486,13 @@
     document.getElementById('select-state')?.remove();
     document.querySelector('.empty-state')?.remove();
     const now = timestamp
-  ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const div = document.createElement('div');
     div.className = 'msg ' + (fromMe ? 'from-me' : 'from-them');
 
-    const deleteBtn = fromMe && messageId ? `
-      <button class="delete-btn" onclick="deleteMessage('${messageId}', this.closest('.msg'))">
+    const deleteBtn = messageId ? `
+      <button class="delete-btn" title="Delete message" onclick="deleteMessage('${messageId}', this.closest('.msg'))">
         <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
       </button>` : '';
 
@@ -467,9 +500,9 @@
       div.innerHTML = `<div class="sign-received"><svg viewBox="0 0 24 24"><path d="M21 6.5c0-1.1-.9-2-2-2h-2V3c0-1.1-.9-2-2-2s-2 .9-2 2v1H9V3c0-1.1-.9-2-2-2S5 1.9 5 3v1.5H3c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6.5z"/></svg><div class="sign-label"><strong>Sign Message</strong><span>"${text}"</span></div></div><div class="msg-meta">${currentReceiverName} · ${now}</div>${deleteBtn}`;
     } else if (mediaUrl) {
       const isVideo = mediaUrl.match(/\.(mp4|webm|mov)$/i);
-      div.innerHTML = `<div class="msg-bubble" style="padding:8px"><div style="font-size:11px;opacity:0.7;margin-bottom:6px">${type==='voice'?'Voice':'Text'}: "${text}"</div>${isVideo?`<video src="${mediaUrl}" controls autoplay loop style="max-width:180px;border-radius:10px;display:block"></video>`:`<img src="${mediaUrl}" alt="sign" style="max-width:180px;border-radius:10px;display:block">`}</div><div class="msg-meta">You · ${now}</div>${deleteBtn}`;
+      div.innerHTML = `<div class="msg-bubble" style="padding:8px"><div style="font-size:11px;opacity:0.7;margin-bottom:6px">${type==='voice'?'Voice':'Text'}: "${text}"</div>${isVideo?`<video src="${mediaUrl}" controls style="max-width:180px;border-radius:10px;display:block"></video>`:`<img src="${mediaUrl}" alt="sign" style="max-width:180px;border-radius:10px;display:block">`}</div><div class="msg-meta">You · ${now}</div>${deleteBtn}`;
     } else {
-      div.innerHTML = `<div class="msg-bubble">${type==='voice'?`<span style="font-size:11px;opacity:0.7;display:block;margin-bottom:4px">Voice message</span>`:''}${text}</div><div class="msg-meta">${fromMe?'You':currentReceiverName} · ${now}</div>${deleteBtn}`;
+      div.innerHTML = `<div class="msg-bubble">${type==='voice'?`<span style="font-size:11px;opacity:0.7;display:block;margin-bottom:4px">🎙 Voice message</span>`:''}${text}</div><div class="msg-meta">${fromMe?'You':currentReceiverName} · ${now}</div>${deleteBtn}`;
     }
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
@@ -482,7 +515,10 @@
       const container = document.getElementById('chat-messages');
       document.getElementById('select-state')?.remove();
       container.innerHTML = '';
-      if (!Array.isArray(messages) || !messages.length) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No history.</div>'; return; }
+      if (!Array.isArray(messages) || !messages.length) {
+        container.innerHTML = '<div class="empty-state"><p>No history available.</p></div>';
+        return;
+      }
       messages.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url, m.date, m.message_id));
     } catch (e) { console.error(e); }
   }
@@ -505,16 +541,14 @@
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(`New message from ${senderName}`, {
         body: text.length > 60 ? text.substring(0, 60) + '...' : text,
-       icon: 'https://bridgsign.netlify.app/favicon.ico'
+        icon: 'https://bridgsign.netlify.app/favicon.ico'
       });
     }
   }
 
   async function pollMessages() {
     try {
-      const res = await fetch(`${API}/messages/history`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(`${API}/messages/history`, { headers: { 'Authorization': `Bearer ${token}` } });
       const messages = await res.json();
       if (!Array.isArray(messages)) return;
 
@@ -529,9 +563,7 @@
       });
 
       if (currentReceiverId) {
-        const convRes = await fetch(`${API}/messages/${currentReceiverId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const convRes = await fetch(`${API}/messages/${currentReceiverId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const convMsgs = await convRes.json();
         if (!Array.isArray(convMsgs)) return;
         if (convMsgs.length > lastMessageCount) {

@@ -37,7 +37,7 @@
     /* MAIN */
     .main { margin-left: var(--sb); flex: 1; display: flex; height: 100vh; overflow: hidden; }
 
-    /* USERS LIST */
+    /* USERS PANEL */
     .users-panel { width: 300px; flex-shrink: 0; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
     .users-header { padding: 22px 20px 16px; border-bottom: 1px solid var(--border); }
     .users-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; margin-bottom: 14px; }
@@ -69,19 +69,19 @@
     .icon-btn:hover { background: rgba(107,122,94,0.15); }
     .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: var(--ink); stroke-width: 1.8; }
 
+    /* MESSAGES */
     .chat-messages { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
+    .select-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+    .select-state svg { width: 64px; height: 64px; fill: none; stroke: rgba(107,122,94,0.3); stroke-width: 1.2; }
+    .select-state h3 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: rgba(30,32,43,0.4); }
+    .select-state p { font-size: 14px; color: var(--muted); text-align: center; max-width: 260px; }
     .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0.45; }
     .empty-state svg { width: 52px; height: 52px; fill: none; stroke: var(--ink); stroke-width: 1.2; }
     .empty-state p { font-size: 15px; font-weight: 600; }
     .empty-state span { font-size: 13px; color: var(--muted); text-align: center; max-width: 240px; }
 
-    /* SELECT USER STATE */
-    .select-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
-    .select-state svg { width: 64px; height: 64px; fill: none; stroke: rgba(107,122,94,0.3); stroke-width: 1.2; }
-    .select-state h3 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: rgba(30,32,43,0.4); }
-    .select-state p { font-size: 14px; color: var(--muted); text-align: center; max-width: 260px; }
-
-    .msg { display: flex; flex-direction: column; max-width: 68%; }
+    /* MESSAGE BUBBLES */
+    .msg { display: flex; flex-direction: column; max-width: 68%; position: relative; }
     .msg.from-me { align-self: flex-end; align-items: flex-end; }
     .msg.from-them { align-self: flex-start; align-items: flex-start; }
     .msg-bubble { padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.6; }
@@ -91,22 +91,32 @@
     .msg-sign-bubble svg { width: 32px; height: 32px; fill: none; stroke: var(--sage); stroke-width: 1.5; flex-shrink: 0; }
     .sign-label strong { display: block; font-weight: 600; font-size: 13px; }
     .sign-label span { color: var(--muted); font-size: 12px; }
-    .msg-video { max-width: 200px; border-radius: 12px; overflow: hidden; }
-    .msg-video video { width: 100%; border-radius: 12px; }
-    .msg-video img { width: 100%; border-radius: 12px; }
+    .msg-media { max-width: 220px; border-radius: 12px; overflow: hidden; }
+    .msg-media video, .msg-media img { width: 100%; border-radius: 12px; display: block; }
     .msg-meta { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
-    .msg { position: relative; }
-    .delete-btn { display: none; position: absolute; top: 0; right: -28px; z-index: 10; }
+
+    /* DELETE BUTTON — show on hover */
+    .delete-btn {
+      display: none;
+      position: absolute;
+      top: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      opacity: 0.6;
+      transition: opacity .2s;
+      z-index: 10;
+    }
     .from-me .delete-btn { right: -28px; }
     .from-them .delete-btn { left: -28px; right: auto; }
     .delete-btn:hover { opacity: 1; }
     .delete-btn svg { width: 14px; height: 14px; fill: none; stroke: #c0392b; stroke-width: 2; }
     .msg:hover .delete-btn { display: block; }
-    .delete-btn:hover { display: block !important; }
 
     /* INPUT BAR */
     .chat-input-area { background: var(--white); border-top: 1px solid var(--border); padding: 16px 24px; flex-shrink: 0; }
-    .input-mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .input-mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
     .imt { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 50px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; border: 1.5px solid var(--border); background: var(--cream); color: var(--muted); font-family: 'Outfit', sans-serif; }
     .imt svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; }
     .imt:hover { border-color: var(--sage); color: var(--sage); }
@@ -114,27 +124,95 @@
     .input-panel { display: none; }
     .input-panel.visible { display: block; }
 
-    .cam-view { background: var(--ink); border-radius: 12px; height: 140px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; position: relative; overflow: hidden; }
+    /* CAMERA / SIGN PANEL */
+    .cam-view { background: var(--ink); border-radius: 12px; height: 160px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; position: relative; overflow: hidden; }
     .cam-view video { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: none; }
     .cam-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .cam-placeholder svg { width: 36px; height: 36px; fill: none; stroke: rgba(255,255,255,0.35); stroke-width: 1.5; }
-    .cam-placeholder p { font-size: 12px; color: rgba(255,255,255,0.35); }
+    .cam-placeholder p { font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; padding: 0 16px; }
     .rec-badge { position: absolute; top: 10px; right: 10px; background: var(--burg); color: var(--white); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 50px; display: none; align-items: center; gap: 5px; }
     .rec-dot { width: 6px; height: 6px; background: var(--white); border-radius: 50%; animation: blink 1s infinite; }
     @keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
-    .cam-actions { display: flex; gap: 10px; }
-    .btn-cam { flex: 1; padding: 11px; border-radius: 12px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all .2s; }
+    .mode-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: var(--white); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 50px; display: none; }
+    .snapshot-preview { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: none; position: absolute; inset: 0; }
+    .cam-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-cam { flex: 1; min-width: 100px; padding: 11px; border-radius: 12px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all .2s; }
     .btn-cam-go { background: var(--sage); color: var(--white); }
     .btn-cam-go:hover { background: var(--sage-lt); }
+    .btn-cam-snap { background: var(--ink); color: var(--white); }
+    .btn-cam-snap:hover { background: #2d2f40; }
+    .btn-cam-send { background: var(--burg); color: var(--white); display: none; }
+    .btn-cam-send:hover { background: #8a2535; }
     .btn-cam-cancel { background: rgba(107,30,46,0.08); color: var(--burg); }
+    .btn-cam-retake { background: rgba(107,122,94,0.12); color: var(--sage); display: none; }
+
+    /* TEXT PANEL */
+    .text-row { display: flex; gap: 10px; align-items: flex-end; }
+    .msg-textarea { flex: 1; padding: 12px 15px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--ink); background: var(--cream); resize: none; outline: none; transition: border-color .2s; height: 48px; max-height: 120px; }
+    .msg-textarea:focus { border-color: var(--sage); }
+    .btn-send { width: 48px; height: 48px; border-radius: 12px; border: none; cursor: pointer; background: var(--sage); color: var(--white); display: flex; align-items: center; justify-content: center; transition: background .2s; flex-shrink: 0; }
+    .btn-send:hover { background: var(--sage-lt); }
+    .btn-send svg { width: 18px; height: 18px; fill: none; stroke: white; stroke-width: 2; }
 
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: rgba(107,122,94,0.25); border-radius: 10px; }
+
+    /* ── MOBILE RESPONSIVE ── */
+    .mobile-topbar { display: none; }
+    .back-btn { display: none; }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar { display: none; }
+      .main { margin-left: 0; flex-direction: column; height: 100vh; overflow: hidden; }
+
+      .mobile-topbar {
+        display: flex; align-items: center; justify-content: space-between;
+        background: var(--ink); padding: 13px 16px; flex-shrink: 0;
+      }
+      .mobile-topbar-logo { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: var(--white); }
+      .mobile-topbar-logo em { color: var(--rose); font-style: normal; }
+      .mobile-topbar-right { display: flex; align-items: center; gap: 8px; }
+      .mobile-topbar-name { font-size: 12px; color: rgba(255,255,255,0.5); }
+      .mobile-logout { background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; font-family: 'Outfit', sans-serif; }
+
+      .users-panel { width: 100%; flex: 1; border-right: none; overflow: hidden; display: flex; flex-direction: column; }
+      .users-header { padding: 14px 16px 10px; }
+      .users-list { flex: 1; overflow-y: auto; }
+
+      .chat-area { display: none; position: fixed; inset: 0; z-index: 40; flex-direction: column; background: var(--cream); }
+      .chat-area.mobile-open { display: flex; }
+
+      .back-btn {
+        display: flex; align-items: center; gap: 5px;
+        background: none; border: none; cursor: pointer;
+        color: var(--sage); font-size: 13px; font-weight: 600;
+        font-family: 'Outfit', sans-serif; margin-right: 8px; flex-shrink: 0;
+      }
+      .back-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--sage); stroke-width: 2.5; }
+
+      .chat-header { padding: 10px 14px; }
+      .chat-messages { padding: 14px 16px; }
+      .chat-input-area { padding: 10px 14px; }
+      .msg { max-width: 85%; }
+      .cam-view { height: 130px; }
+      .from-me .delete-btn { right: -24px; }
+      .from-them .delete-btn { left: -24px; }
+    }
+
+    @media (max-width: 480px) {
+      .msg { max-width: 90%; }
+      .input-mode-tabs { gap: 5px; }
+      .imt { padding: 7px 10px; font-size: 11px; }
+      .chat-input-area { padding: 8px 12px; }
+      .cam-view { height: 110px; }
+      .btn-cam { font-size: 12px; padding: 9px; }
+    }
   </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
+<!-- SIDEBAR (desktop only) -->
 <aside class="sidebar">
   <a href="index.html" class="logo">
     <div class="logo-mark">
@@ -159,7 +237,7 @@
   <div class="sidebar-foot">
     <div class="user-pill">
       <div class="avatar">
-        <svg viewBox="0 0 24 24"><path d="M17 8C17 10.76 15.35 13.15 13 14.29V17H11V14.29C8.65 13.15 7 10.76 7 8C7 4.69 9.69 2 13 2C16.31 2 17 4.69 17 8Z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
       </div>
       <div>
         <div class="u-name" id="user-name">Loading...</div>
@@ -171,6 +249,15 @@
 
 <!-- MAIN -->
 <div class="main">
+
+  <!-- MOBILE TOPBAR -->
+  <div class="mobile-topbar">
+    <div class="mobile-topbar-logo">Bridge<em>Sign</em></div>
+    <div class="mobile-topbar-right">
+      <span class="mobile-topbar-name" id="mobile-user-name"></span>
+      <button class="mobile-logout" onclick="logout(); window.location.href='login.html'">Sign Out</button>
+    </div>
+  </div>
 
   <!-- USERS LIST -->
   <div class="users-panel">
@@ -190,9 +277,12 @@
   </div>
 
   <!-- CHAT AREA -->
-  <div class="chat-area">
+  <div class="chat-area" id="chat-area">
     <div class="chat-header">
       <div class="chat-user-info">
+        <button class="back-btn" onclick="goBackToList()">
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+        </button>
         <div class="chat-av" id="chat-av">?</div>
         <div>
           <div class="chat-name" id="chat-contact-name">Select a user to start chatting</div>
@@ -217,28 +307,90 @@
     <!-- INPUT BAR -->
     <div class="chat-input-area" id="chat-input-area" style="display:none">
       <div class="input-mode-tabs">
-        <button class="imt active" onclick="setMode('sign', this)">
-          <svg viewBox="0 0 24 24"><path d="M21 6.5c0-1.1-.9-2-2-2h-2V3c0-1.1-.9-2-2-2s-2 .9-2 2v1H9V3c0-1.1-.9-2-2-2S5 1.9 5 3v1.5H3c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6.5z"/></svg>
+        <button class="imt active" id="tab-sign" onclick="setMode('sign', this)">
+          <svg viewBox="0 0 24 24"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>
           Sign (Camera)
+        </button>
+        <button class="imt" id="tab-video" onclick="setMode('video', this)">
+          <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+          Record Video
+        </button>
+        <button class="imt" id="tab-photo" onclick="setMode('photo', this)">
+          <svg viewBox="0 0 24 24"><path d="M12 15.2c-1.77 0-3.2-1.43-3.2-3.2S10.23 8.8 12 8.8s3.2 1.43 3.2 3.2-1.43 3.2-3.2 3.2zM9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9z"/></svg>
+          Take Photo
+        </button>
+        <button class="imt" id="tab-text" onclick="setMode('text', this)">
+          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          Type
         </button>
       </div>
 
+      <!-- SIGN PANEL (live camera → send sign message) -->
       <div class="input-panel visible" id="panel-sign">
-        <div class="cam-view" id="cam-view">
-          <video id="cam-feed" autoplay playsinline muted></video>
-          <div class="cam-placeholder" id="cam-ph">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-            <p>Camera off — press Start to capture your sign</p>
+        <div class="cam-view" id="sign-cam-view">
+          <video id="sign-feed" autoplay playsinline muted></video>
+          <div class="cam-placeholder" id="sign-ph">
+            <svg viewBox="0 0 24 24"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>
+            <p>Press Start to show your sign to the camera</p>
           </div>
-          <div class="rec-badge" id="rec-badge"><div class="rec-dot"></div> REC</div>
+          <div class="rec-badge" id="sign-rec-badge"><div class="rec-dot"></div> LIVE</div>
         </div>
         <div class="cam-actions">
-          <button class="btn-cam btn-cam-go" id="cam-btn" onclick="toggleCamera()">Start Camera</button>
-          <button class="btn-cam btn-cam-cancel" onclick="cancelCamera()">Cancel</button>
+          <button class="btn-cam btn-cam-go" id="sign-btn" onclick="toggleSignCamera()">Start Camera</button>
+          <button class="btn-cam btn-cam-cancel" onclick="cancelSignCamera()">Cancel</button>
+          <button class="btn-cam btn-cam-send" id="sign-send-btn" onclick="sendSignMessage()">Send Sign</button>
+        </div>
+      </div>
+
+      <!-- VIDEO RECORD PANEL -->
+      <div class="input-panel" id="panel-video">
+        <div class="cam-view" id="video-cam-view">
+          <video id="video-feed" autoplay playsinline muted></video>
+          <div class="cam-placeholder" id="video-ph">
+            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            <p>Press Start to record a video</p>
+          </div>
+          <div class="rec-badge" id="video-rec-badge"><div class="rec-dot"></div> REC</div>
+          <div class="mode-badge" id="video-time-badge">0s</div>
+        </div>
+        <div class="cam-actions">
+          <button class="btn-cam btn-cam-go" id="video-btn" onclick="toggleVideoRecord()">Start Recording</button>
+          <button class="btn-cam btn-cam-cancel" onclick="cancelVideo()">Cancel</button>
+          <button class="btn-cam btn-cam-send" id="video-send-btn" onclick="sendRecordedVideo()">Send Video</button>
+        </div>
+      </div>
+
+      <!-- PHOTO PANEL -->
+      <div class="input-panel" id="panel-photo">
+        <div class="cam-view" id="photo-cam-view">
+          <video id="photo-feed" autoplay playsinline muted></video>
+          <canvas id="photo-canvas" style="display:none"></canvas>
+          <img id="photo-preview" class="snapshot-preview" alt="snapshot"/>
+          <div class="cam-placeholder" id="photo-ph">
+            <svg viewBox="0 0 24 24"><path d="M12 15.2c-1.77 0-3.2-1.43-3.2-3.2S10.23 8.8 12 8.8s3.2 1.43 3.2 3.2-1.43 3.2-3.2 3.2zM9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9z"/></svg>
+            <p>Press Open Camera then Take Photo</p>
+          </div>
+          <div class="mode-badge" id="photo-mode-badge" style="display:none">📷 CAMERA LIVE</div>
+        </div>
+        <div class="cam-actions">
+          <button class="btn-cam btn-cam-go" id="photo-start-btn" onclick="startPhotoCamera()">Open Camera</button>
+          <button class="btn-cam btn-cam-snap" id="photo-snap-btn" style="display:none" onclick="takePhoto()">📷 Take Photo</button>
+          <button class="btn-cam btn-cam-retake" id="photo-retake-btn" onclick="retakePhoto()">Retake</button>
+          <button class="btn-cam btn-cam-send" id="photo-send-btn" onclick="sendPhoto()">Send Photo</button>
+          <button class="btn-cam btn-cam-cancel" onclick="cancelPhoto()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- TEXT PANEL -->
+      <div class="input-panel" id="panel-text">
+        <div class="text-row">
+          <textarea class="msg-textarea" id="text-input" placeholder="Type your message..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="btn-send" onclick="sendTextMsg()">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -247,31 +399,54 @@
   const token = localStorage.getItem('bs_token');
   const profile = JSON.parse(localStorage.getItem('bs_profile') || 'null');
 
-  if (!token || !profile || profile.role !== 'deaf') {
-    window.location.href = 'login.html';
-  }
+  if (!token || !profile || profile.role !== 'deaf') window.location.href = 'login.html';
 
   document.getElementById('user-name').textContent = profile?.name || 'User';
+  const mun = document.getElementById('mobile-user-name');
+  if (mun) mun.textContent = profile?.name || '';
 
-  let stream = null, capturing = false;
+  // ── STATE ─────────────────────────────────────────────
   let currentReceiverId = null;
   let currentReceiverName = null;
   let allUsers = [];
+  let lastMessageCount = 0;
+  let pollTimer = null;
+  let knownMessageIds = new Set();
+
+  // Sign camera state
+  let signStream = null;
+  let signActive = false;
+
+  // Video record state
+  let videoStream = null;
+  let mediaRecorder = null;
+  let videoChunks = [];
+  let recordedBlob = null;
+  let videoRecording = false;
+  let videoTimer = null;
+  let videoSeconds = 0;
+
+  // Photo state
+  let photoStream = null;
+  let photoDataUrl = null;
+  let photoCameraOpen = false;
 
   function logout() { localStorage.clear(); }
 
-  // ── LOAD HEARING USERS ─────────────────────────────────
+  function goBackToList() {
+    document.getElementById('chat-area').classList.remove('mobile-open');
+  }
+
+  // ── USERS ─────────────────────────────────────────────
   async function loadUsers() {
     try {
-      const res = await fetch(`${API}/users?role=hearing`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(`${API}/users?role=hearing`, { headers: { 'Authorization': `Bearer ${token}` } });
       allUsers = await res.json();
       renderUsers(allUsers);
     } catch (e) {
       document.getElementById('users-list').innerHTML = `
         <div class="no-users">
-          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
           <p>Error loading users</p>
         </div>`;
     }
@@ -280,11 +455,7 @@
   function renderUsers(users) {
     const list = document.getElementById('users-list');
     if (!users.length) {
-      list.innerHTML = `
-        <div class="no-users">
-          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-          <p>No hearing users found</p>
-        </div>`;
+      list.innerHTML = `<div class="no-users"><p>No hearing users found</p></div>`;
       return;
     }
     list.innerHTML = users.map(u => `
@@ -294,129 +465,387 @@
           <div class="user-name">${u.name} ${u.lastname}</div>
           <div class="user-role-badge">Hearing User</div>
         </div>
-      </div>
-    `).join('');
+      </div>`).join('');
   }
 
   function filterUsers(val) {
-    const filtered = allUsers.filter(u =>
-      (u.name + ' ' + u.lastname).toLowerCase().includes(val.toLowerCase())
-    );
-    renderUsers(filtered);
+    renderUsers(allUsers.filter(u => (u.name + ' ' + u.lastname).toLowerCase().includes(val.toLowerCase())));
   }
 
   function selectUser(userId, userName, el) {
     currentReceiverId = userId;
     currentReceiverName = userName;
 
-    // Update active state
     document.querySelectorAll('.user-item').forEach(i => i.classList.remove('active'));
     el.classList.add('active');
 
-    // Update chat header
     document.getElementById('chat-av').textContent = userName.charAt(0).toUpperCase();
     document.getElementById('chat-contact-name').textContent = userName;
     document.getElementById('chat-status').textContent = 'Hearing User';
-
-    // Show input bar
     document.getElementById('chat-input-area').style.display = 'block';
     document.getElementById('chat-area').classList.add('mobile-open');
 
-    // Load conversation + start polling
+    // Stop any ongoing camera/recording when switching user
+    stopAllMedia();
+
     lastMessageCount = 0;
     loadConversation(userId);
     startPolling();
   }
 
-  async function loadConversation(userId) {
-    try {
-      const res = await fetch(`${API}/messages/${userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const messages = await res.json();
-      const container = document.getElementById('chat-messages');
-      container.innerHTML = '';
+  function stopAllMedia() {
+    cancelSignCamera();
+    cancelVideo();
+    cancelPhoto();
+  }
 
+  // ── CONVERSATION ──────────────────────────────────────
+  async function loadConversation(userId) {
+    const container = document.getElementById('chat-messages');
+    // IMPORTANT: Always clear the container first, show loading
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Loading...</div>';
+    try {
+      const res = await fetch(`${API}/messages/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const messages = await res.json();
+      container.innerHTML = '';
       if (!Array.isArray(messages) || !messages.length) {
+        // ✅ FIX: Always show "No history available" for new/empty conversation
         container.innerHTML = `
           <div class="empty-state">
             <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-            <p>No history availabale</p>
-            <span>Start the conversation by signing or typing a message.</span>
+            <p>No history available</p>
+            <span>Start the conversation by signing, recording, or typing a message.</span>
           </div>`;
         return;
       }
-
       messages.forEach(m => {
         const fromMe = m.sender_id === profile.user_id;
         appendMsg(m.type, m.content, fromMe, m.media_url, m.date, m.message_id);
       });
-    } catch (e) { console.error('Error loading conversation:', e); }
+      container.scrollTop = container.scrollHeight;
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state"><p>Failed to load conversation</p></div>`;
+      console.error('Error loading conversation:', e);
+    }
   }
 
+  // ── INPUT MODES ───────────────────────────────────────
   function setMode(mode, btn) {
+    stopAllMedia();
     document.querySelectorAll('.imt').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.input-panel').forEach(p => p.classList.remove('visible'));
     document.getElementById('panel-' + mode).classList.add('visible');
-    if (mode !== 'sign') cancelCamera();
   }
 
-  async function toggleCamera() {
-    const btn = document.getElementById('cam-btn');
-    const ph = document.getElementById('cam-ph');
-    const video = document.getElementById('cam-feed');
-    const rec = document.getElementById('rec-badge');
-    if (!capturing) {
+  // ── SIGN CAMERA ───────────────────────────────────────
+  async function toggleSignCamera() {
+    const btn = document.getElementById('sign-btn');
+    const ph = document.getElementById('sign-ph');
+    const video = document.getElementById('sign-feed');
+    const rec = document.getElementById('sign-rec-badge');
+    const sendBtn = document.getElementById('sign-send-btn');
+
+    if (!signActive) {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
+        signStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = signStream;
         video.style.display = 'block';
         ph.style.display = 'none';
         rec.style.display = 'flex';
-        btn.textContent = 'Stop & Send Sign';
-        capturing = true;
-      } catch (e) { alert('Camera access denied.'); }
+        btn.textContent = 'Stop Camera';
+        sendBtn.style.display = 'block';
+        signActive = true;
+      } catch (e) { alert('Camera access denied. Please allow camera access.'); }
     } else {
-      stopCamera();
-      sendSignMsg();
+      cancelSignCamera();
     }
   }
 
-  function stopCamera() {
-    const video = document.getElementById('cam-feed');
-    const ph = document.getElementById('cam-ph');
-    const rec = document.getElementById('rec-badge');
-    const btn = document.getElementById('cam-btn');
-    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-    video.style.display = 'none';
-    ph.style.display = 'flex';
-    rec.style.display = 'none';
-    btn.textContent = 'Start Camera';
-    capturing = false;
+  function cancelSignCamera() {
+    const video = document.getElementById('sign-feed');
+    const ph = document.getElementById('sign-ph');
+    const rec = document.getElementById('sign-rec-badge');
+    const btn = document.getElementById('sign-btn');
+    const sendBtn = document.getElementById('sign-send-btn');
+    if (signStream) { signStream.getTracks().forEach(t => t.stop()); signStream = null; }
+    if (video) { video.style.display = 'none'; }
+    if (ph) ph.style.display = 'flex';
+    if (rec) rec.style.display = 'none';
+    if (btn) btn.textContent = 'Start Camera';
+    if (sendBtn) sendBtn.style.display = 'none';
+    signActive = false;
   }
 
-  function cancelCamera() { stopCamera(); }
-
-  async function sendSignMsg() {
+  async function sendSignMessage() {
     const text = "Sign gesture captured";
+    cancelSignCamera();
     appendMsg('sign', text, true);
     await saveMessage(text, 'sign');
   }
 
+  // ── VIDEO RECORD ──────────────────────────────────────
+  async function toggleVideoRecord() {
+    const btn = document.getElementById('video-btn');
+    const ph = document.getElementById('video-ph');
+    const video = document.getElementById('video-feed');
+    const rec = document.getElementById('video-rec-badge');
+    const timeBadge = document.getElementById('video-time-badge');
+    const sendBtn = document.getElementById('video-send-btn');
 
+    if (!videoRecording) {
+      if (!videoStream) {
+        try {
+          videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          video.srcObject = videoStream;
+          video.style.display = 'block';
+          ph.style.display = 'none';
+        } catch (e) {
+          alert('Camera/microphone access denied.'); return;
+        }
+      }
+      // Start recording
+      videoChunks = [];
+      recordedBlob = null;
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
+      mediaRecorder = new MediaRecorder(videoStream, { mimeType });
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) videoChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        recordedBlob = new Blob(videoChunks, { type: mimeType });
+      };
+      mediaRecorder.start(100);
+      videoRecording = true;
+      videoSeconds = 0;
+      timeBadge.textContent = '0s';
+      timeBadge.style.display = 'flex';
+      rec.style.display = 'flex';
+      btn.textContent = 'Stop Recording';
+      btn.style.background = '#8a2535';
+      sendBtn.style.display = 'none';
+      videoTimer = setInterval(() => {
+        videoSeconds++;
+        timeBadge.textContent = videoSeconds + 's';
+      }, 1000);
+    } else {
+      // Stop recording
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      clearInterval(videoTimer);
+      videoRecording = false;
+      rec.style.display = 'none';
+      btn.textContent = 'Record Again';
+      btn.style.background = '';
+      sendBtn.style.display = 'block';
+      timeBadge.style.display = 'none';
+    }
+  }
+
+  async function sendRecordedVideo() {
+    if (!recordedBlob) { alert('No video recorded yet.'); return; }
+    const sendBtn = document.getElementById('video-send-btn');
+    sendBtn.textContent = 'Sending...';
+    sendBtn.disabled = true;
+    try {
+      const formData = new FormData();
+      formData.append('file', recordedBlob, 'sign_video.webm');
+      formData.append('receiver_id', currentReceiverId);
+      formData.append('type', 'video');
+      formData.append('content', 'Video sign message');
+      const res = await fetch(`${API}/messages/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      appendMsg('video', 'Video sign message', true, data.media_url || null);
+    } catch (e) {
+      // Fallback: send as sign message if upload not supported
+      appendMsg('sign', 'Video sign message', true);
+      await saveMessage('Video sign message', 'sign');
+    }
+    sendBtn.textContent = 'Send Video';
+    sendBtn.disabled = false;
+    cancelVideo();
+  }
+
+  function cancelVideo() {
+    const video = document.getElementById('video-feed');
+    const ph = document.getElementById('video-ph');
+    const rec = document.getElementById('video-rec-badge');
+    const btn = document.getElementById('video-btn');
+    const timeBadge = document.getElementById('video-time-badge');
+    const sendBtn = document.getElementById('video-send-btn');
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch(e){} }
+    clearInterval(videoTimer);
+    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+    mediaRecorder = null; videoChunks = []; recordedBlob = null; videoRecording = false; videoSeconds = 0;
+    if (video) video.style.display = 'none';
+    if (ph) ph.style.display = 'flex';
+    if (rec) rec.style.display = 'none';
+    if (timeBadge) timeBadge.style.display = 'none';
+    if (btn) { btn.textContent = 'Start Recording'; btn.style.background = ''; }
+    if (sendBtn) sendBtn.style.display = 'none';
+  }
+
+  // ── PHOTO ─────────────────────────────────────────────
+  async function startPhotoCamera() {
+    const video = document.getElementById('photo-feed');
+    const ph = document.getElementById('photo-ph');
+    const startBtn = document.getElementById('photo-start-btn');
+    const snapBtn = document.getElementById('photo-snap-btn');
+    const preview = document.getElementById('photo-preview');
+    const modeBadge = document.getElementById('photo-mode-badge');
+    const retakeBtn = document.getElementById('photo-retake-btn');
+    const sendBtn = document.getElementById('photo-send-btn');
+
+    // If already have a photo, retake
+    if (photoDataUrl) { retakePhoto(); return; }
+
+    if (!photoCameraOpen) {
+      try {
+        photoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = photoStream;
+        video.style.display = 'block';
+        ph.style.display = 'none';
+        preview.style.display = 'none';
+        modeBadge.style.display = 'flex';
+        startBtn.style.display = 'none';
+        snapBtn.style.display = 'block';
+        retakeBtn.style.display = 'none';
+        sendBtn.style.display = 'none';
+        photoCameraOpen = true;
+        photoDataUrl = null;
+      } catch (e) { alert('Camera access denied.'); }
+    }
+  }
+
+  function takePhoto() {
+    const video = document.getElementById('photo-feed');
+    const canvas = document.getElementById('photo-canvas');
+    const preview = document.getElementById('photo-preview');
+    const snapBtn = document.getElementById('photo-snap-btn');
+    const retakeBtn = document.getElementById('photo-retake-btn');
+    const sendBtn = document.getElementById('photo-send-btn');
+    const modeBadge = document.getElementById('photo-mode-badge');
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+    // Stop camera, show preview
+    if (photoStream) { photoStream.getTracks().forEach(t => t.stop()); photoStream = null; }
+    video.style.display = 'none';
+    preview.src = photoDataUrl;
+    preview.style.display = 'block';
+    modeBadge.style.display = 'none';
+    snapBtn.style.display = 'none';
+    retakeBtn.style.display = 'block';
+    sendBtn.style.display = 'block';
+    photoCameraOpen = false;
+  }
+
+  function retakePhoto() {
+    const preview = document.getElementById('photo-preview');
+    const retakeBtn = document.getElementById('photo-retake-btn');
+    const sendBtn = document.getElementById('photo-send-btn');
+    const startBtn = document.getElementById('photo-start-btn');
+    const ph = document.getElementById('photo-ph');
+
+    photoDataUrl = null;
+    preview.src = '';
+    preview.style.display = 'none';
+    retakeBtn.style.display = 'none';
+    sendBtn.style.display = 'none';
+    startBtn.style.display = 'block';
+    ph.style.display = 'flex';
+    photoCameraOpen = false;
+  }
+
+  async function sendPhoto() {
+    if (!photoDataUrl) { alert('No photo taken yet.'); return; }
+    const sendBtn = document.getElementById('photo-send-btn');
+    sendBtn.textContent = 'Sending...';
+    sendBtn.disabled = true;
+    try {
+      // Convert dataURL to blob
+      const res = await fetch(photoDataUrl);
+      const blob = await res.blob();
+      const formData = new FormData();
+      formData.append('file', blob, 'sign_photo.jpg');
+      formData.append('receiver_id', currentReceiverId);
+      formData.append('type', 'photo');
+      formData.append('content', 'Photo sign message');
+      const uploadRes = await fetch(`${API}/messages/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await uploadRes.json();
+      appendMsg('photo', 'Photo sign message', true, data.media_url || photoDataUrl);
+    } catch (e) {
+      // Fallback: show the local photo if upload fails
+      appendMsg('photo', 'Photo sign message', true, photoDataUrl);
+      await saveMessage('Photo sign message', 'photo');
+    }
+    sendBtn.textContent = 'Send Photo';
+    sendBtn.disabled = false;
+    cancelPhoto();
+  }
+
+  function cancelPhoto() {
+    if (photoStream) { photoStream.getTracks().forEach(t => t.stop()); photoStream = null; }
+    const video = document.getElementById('photo-feed');
+    const preview = document.getElementById('photo-preview');
+    const ph = document.getElementById('photo-ph');
+    const startBtn = document.getElementById('photo-start-btn');
+    const snapBtn = document.getElementById('photo-snap-btn');
+    const retakeBtn = document.getElementById('photo-retake-btn');
+    const sendBtn = document.getElementById('photo-send-btn');
+    const modeBadge = document.getElementById('photo-mode-badge');
+    if (video) video.style.display = 'none';
+    if (preview) { preview.src = ''; preview.style.display = 'none'; }
+    if (ph) ph.style.display = 'flex';
+    if (startBtn) startBtn.style.display = 'block';
+    if (snapBtn) snapBtn.style.display = 'none';
+    if (retakeBtn) retakeBtn.style.display = 'none';
+    if (sendBtn) sendBtn.style.display = 'none';
+    if (modeBadge) modeBadge.style.display = 'none';
+    photoDataUrl = null;
+    photoCameraOpen = false;
+  }
+
+  // ── TEXT ─────────────────────────────────────────────
+  async function sendTextMsg() {
+    const ta = document.getElementById('text-input');
+    const text = ta.value.trim();
+    if (!text || !currentReceiverId) return;
+    ta.value = ''; ta.style.height = '48px';
+    appendMsg('text', text, true);
+    await saveMessage(text, 'text');
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTextMsg(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = '48px';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  // ── SAVE / DELETE ─────────────────────────────────────
   async function saveMessage(content, type, mediaUrl = null) {
     if (!currentReceiverId) return;
     try {
       await fetch(`${API}/messages`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          receiver_id: currentReceiverId,
-          content,
-          type,
-          media_url: mediaUrl
-        })
+        body: JSON.stringify({ receiver_id: currentReceiverId, content, type, media_url: mediaUrl })
       });
     } catch (e) { console.error('Error saving message:', e); }
   }
@@ -432,76 +861,59 @@
     } catch (e) { alert('Failed to delete message.'); }
   }
 
+  // ── APPEND MESSAGE ────────────────────────────────────
   function appendMsg(type, text, fromMe, mediaUrl = null, timestamp = null, messageId = null) {
     const container = document.getElementById('chat-messages');
-    const selectState = document.getElementById('select-state');
-    if (selectState) selectState.remove();
-    const emptyState = document.querySelector('.empty-state');
-    if (emptyState) emptyState.remove();
+    document.getElementById('select-state')?.remove();
+    document.querySelector('.empty-state')?.remove();
 
     const now = timestamp
-  ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     const div = document.createElement('div');
     div.className = 'msg ' + (fromMe ? 'from-me' : 'from-them');
 
-    const deleteBtn = fromMe && messageId ? `
-      <button class="delete-btn" onclick="deleteMessage('${messageId}', this.closest('.msg'))">
+    const deleteBtn = messageId ? `
+      <button class="delete-btn" title="Delete message" onclick="deleteMessage('${messageId}', this.closest('.msg'))">
         <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
       </button>` : '';
 
     if (type === 'sign') {
       div.innerHTML = `
         <div class="msg-sign-bubble">
-          <svg viewBox="0 0 24 24"><path d="M21 6.5c0-1.1-.9-2-2-2h-2V3c0-1.1-.9-2-2-2s-2 .9-2 2v1H9V3c0-1.1-.9-2-2-2S5 1.9 5 3v1.5H3c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6.5z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>
           <div class="sign-label"><strong>Sign Message</strong><span>"${text}"</span></div>
         </div>
-        <div class="msg-meta">You · ${now}</div>${deleteBtn}`;
-    } else if (mediaUrl) {
-      const isVideo = mediaUrl.match(/\.(mp4|webm|mov)$/i);
-      div.innerHTML = `
-        <div class="msg-video">
-          ${isVideo
-            ? `<video src="${mediaUrl}" controls autoplay loop style="max-width:200px;border-radius:12px"></video>`
-            : `<img src="${mediaUrl}" alt="sign" style="max-width:200px;border-radius:12px">`
-          }
-        </div>
         <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
+    } else if (type === 'video' || type === 'photo') {
+      const isVideo = type === 'video' || (mediaUrl && mediaUrl.match(/\.(mp4|webm|mov)$/i));
+      const typeLabel = type === 'video' ? '🎥 Video sign message' : '📷 Photo sign message';
+      if (mediaUrl) {
+        div.innerHTML = `
+          <div class="msg-media">
+            ${isVideo
+              ? `<video src="${mediaUrl}" controls style="width:100%;border-radius:12px"></video>`
+              : `<img src="${mediaUrl}" alt="sign photo" style="width:100%;border-radius:12px">`
+            }
+          </div>
+          <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
+      } else {
+        div.innerHTML = `
+          <div class="msg-bubble">${typeLabel}</div>
+          <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
+      }
     } else {
       div.innerHTML = `
         <div class="msg-bubble">${text}</div>
         <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
     }
+
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
   }
 
-  async function loadHistory() {
-    try {
-      const res = await fetch(`${API}/messages/history`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const messages = await res.json();
-      const container = document.getElementById('chat-messages');
-      container.innerHTML = '';
-      if (!Array.isArray(messages) || !messages.length) {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No history available.</div>';
-        return;
-      }
-      messages.forEach(m => {
-        const fromMe = m.sender_id === profile.user_id;
-        appendMsg(m.type, m.content, fromMe, m.media_url, m.date, m.message_id);
-      });
-    } catch (e) { console.error('Error loading history:', e); }
-  }
-
-
-
-  // ── NOTIFICATIONS + POLLING ──────────────────────────
-  let lastMessageCount = 0;
-  let pollTimer = null;
-  let knownMessageIds = new Set();
-
+  // ── NOTIFICATIONS + POLLING ───────────────────────────
   async function requestNotifPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
       await Notification.requestPermission();
@@ -519,31 +931,22 @@
 
   async function pollMessages() {
     try {
-      // Global poll — check all messages received
-      const res = await fetch(`${API}/messages/history`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(`${API}/messages/history`, { headers: { 'Authorization': `Bearer ${token}` } });
       const messages = await res.json();
       if (!Array.isArray(messages)) return;
 
-      // Find new messages received by me
+      const isFirstLoad = knownMessageIds.size === 0;
       messages.forEach(m => {
-        if (m.sender_id !== profile.user_id && !knownMessageIds.has(m.message_id)) {
+        if (!knownMessageIds.has(m.message_id)) {
           knownMessageIds.add(m.message_id);
-          // Only notify if it's a truly new message (not on first load)
-          if (knownMessageIds.size > 1 || messages.length === 1) {
+          if (!isFirstLoad && m.sender_id !== profile.user_id) {
             showNotif('Hearing User', m.content);
           }
-        } else {
-          knownMessageIds.add(m.message_id);
         }
       });
 
-      // If conversation open, refresh it silently
       if (currentReceiverId) {
-        const convRes = await fetch(`${API}/messages/${currentReceiverId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const convRes = await fetch(`${API}/messages/${currentReceiverId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const convMsgs = await convRes.json();
         if (!Array.isArray(convMsgs)) return;
         if (convMsgs.length > lastMessageCount) {
