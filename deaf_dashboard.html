@@ -95,6 +95,14 @@
     .msg-video video { width: 100%; border-radius: 12px; }
     .msg-video img { width: 100%; border-radius: 12px; }
     .msg-meta { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+    .msg { position: relative; }
+    .delete-btn { display: none; position: absolute; top: 0; right: -28px; z-index: 10; }
+    .from-me .delete-btn { right: -28px; }
+    .from-them .delete-btn { left: -28px; right: auto; }
+    .delete-btn:hover { opacity: 1; }
+    .delete-btn svg { width: 14px; height: 14px; fill: none; stroke: #c0392b; stroke-width: 2; }
+    .msg:hover .delete-btn { display: block; }
+    .delete-btn:hover { display: block !important; }
 
     /* INPUT BAR */
     .chat-input-area { background: var(--white); border-top: 1px solid var(--border); padding: 16px 24px; flex-shrink: 0; }
@@ -333,7 +341,7 @@
         container.innerHTML = `
           <div class="empty-state">
             <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-            <p>No messages yet</p>
+            <p>No history availabale</p>
             <span>Start the conversation by signing or typing a message.</span>
           </div>`;
         return;
@@ -341,7 +349,7 @@
 
       messages.forEach(m => {
         const fromMe = m.sender_id === profile.user_id;
-        appendMsg(m.type, m.content, fromMe, m.media_url);
+        appendMsg(m.type, m.content, fromMe, m.media_url, m.date, m.message_id);
       });
     } catch (e) { console.error('Error loading conversation:', e); }
   }
@@ -413,16 +421,34 @@
     } catch (e) { console.error('Error saving message:', e); }
   }
 
-  function appendMsg(type, text, fromMe, mediaUrl = null) {
+  async function deleteMessage(messageId, divEl) {
+    if (!confirm('Delete this message?')) return;
+    try {
+      await fetch(`${API}/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      divEl.remove();
+    } catch (e) { alert('Failed to delete message.'); }
+  }
+
+  function appendMsg(type, text, fromMe, mediaUrl = null, timestamp = null, messageId = null) {
     const container = document.getElementById('chat-messages');
     const selectState = document.getElementById('select-state');
     if (selectState) selectState.remove();
     const emptyState = document.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
 
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const now = timestamp
+  ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const div = document.createElement('div');
     div.className = 'msg ' + (fromMe ? 'from-me' : 'from-them');
+
+    const deleteBtn = fromMe && messageId ? `
+      <button class="delete-btn" onclick="deleteMessage('${messageId}', this.closest('.msg'))">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>` : '';
 
     if (type === 'sign') {
       div.innerHTML = `
@@ -430,7 +456,7 @@
           <svg viewBox="0 0 24 24"><path d="M21 6.5c0-1.1-.9-2-2-2h-2V3c0-1.1-.9-2-2-2s-2 .9-2 2v1H9V3c0-1.1-.9-2-2-2S5 1.9 5 3v1.5H3c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6.5z"/></svg>
           <div class="sign-label"><strong>Sign Message</strong><span>"${text}"</span></div>
         </div>
-        <div class="msg-meta">You · ${now}</div>`;
+        <div class="msg-meta">You · ${now}</div>${deleteBtn}`;
     } else if (mediaUrl) {
       const isVideo = mediaUrl.match(/\.(mp4|webm|mov)$/i);
       div.innerHTML = `
@@ -440,11 +466,11 @@
             : `<img src="${mediaUrl}" alt="sign" style="max-width:200px;border-radius:12px">`
           }
         </div>
-        <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>`;
+        <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
     } else {
       div.innerHTML = `
         <div class="msg-bubble">${text}</div>
-        <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>`;
+        <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
     }
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
@@ -464,7 +490,7 @@
       }
       messages.forEach(m => {
         const fromMe = m.sender_id === profile.user_id;
-        appendMsg(m.type, m.content, fromMe, m.media_url);
+        appendMsg(m.type, m.content, fromMe, m.media_url, m.date, m.message_id);
       });
     } catch (e) { console.error('Error loading history:', e); }
   }
@@ -524,7 +550,7 @@
           const container = document.getElementById('chat-messages');
           const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
           container.innerHTML = '';
-          convMsgs.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url));
+          convMsgs.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url, m.date, m.message_id));
           if (atBottom) container.scrollTop = container.scrollHeight;
           lastMessageCount = convMsgs.length;
         }
