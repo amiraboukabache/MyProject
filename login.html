@@ -365,7 +365,7 @@ await fetch(`${API}/activity`, {
       });
       const loginData = await loginRes.json();
 
-      if (loginData.access_token) {
+if (loginData.access_token) {
         localStorage.setItem('bs_token', loginData.access_token);
         localStorage.setItem('bs_user', JSON.stringify(loginData.user));
         const profileRes = await fetch(`${API}/profile`, {
@@ -373,21 +373,23 @@ await fetch(`${API}/activity`, {
         });
         const profile = await profileRes.json();
         localStorage.setItem('bs_profile', JSON.stringify(profile));
-        
-await fetch(`${API}/account`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${loginData.access_token}` }
-});
-           await fetch(`${API}/activity`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${data.access_token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'login' })
-});
+
+        await fetch(`${API}/account`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${loginData.access_token}` }
+        });
+
+        await fetch(`${API}/activity`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${loginData.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login' })
+        });
+
         goToDashboard(selectedRole);
       }
 
     } catch (e) {
-      showError('register-error', 'Connection error. Make sure the server is running.');
+      showError('register-error', 'Connection error: ' + e.message);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Create Account as ' + (selectedRole === 'hearing' ? 'Hearing User' : 'Deaf User');
