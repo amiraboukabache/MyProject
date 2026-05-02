@@ -327,14 +327,14 @@
 <div class="cam-actions">
   <button class="btn-cam btn-cam-go" id="sign-btn" onclick="toggleSignCamera()">Start Camera</button>
   <button class="btn-cam btn-cam-cancel" onclick="cancelSignCamera()">Cancel</button>
+  <button class="btn-cam btn-cam-send" id="sign-send-btn" onclick="confirmAndSend()" style="display:none; background:var(--burg); color:white;">Send Sign</button>
 </div>
-
 
 <!-- Zone de confirmation -->
 <div id="sign-confirm-area" style="display:none; margin-top:12px; background:rgba(107,122,94,0.1); border-radius:12px; padding:14px 16px; align-items:center; justify-content:space-between; gap:12px;">
   <div>
     <div style="font-size:11px; color:var(--muted); margin-bottom:4px">Word detected</div>
-    <div id="sign-stable-label" style="font-size:22px; font-weight:700; color:var(--sage)"></div>
+    <div id="sign-stable-label" style="font-size:22px; font-weight:700; color:var(--sage)">...</div>
   </div>
   <button onclick="confirmAndSend()" style="background:var(--sage); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Outfit',sans-serif;">
     ✓ Send
@@ -538,6 +538,7 @@
         if (ph) { ph.style.display = 'flex'; ph.querySelector('p').textContent = 'Show your hand...'; }
         rec.style.display = 'flex';
         btn.textContent = 'Stop Camera';
+        document.getElementById('sign-send-btn').style.display = 'block';
         signActive = true;
         predictionBuffer = [];
         // Capturer une frame toutes les 500ms
@@ -562,6 +563,8 @@
     if (ph) { ph.style.display = 'flex'; ph.querySelector('p').textContent = 'Press Start to show your sign to the camera'; }
     if (rec) rec.style.display = 'none';
     if (btn) btn.textContent = 'Start Camera';
+    const sendBtn = document.getElementById('sign-send-btn');
+if (sendBtn) sendBtn.style.display = 'none';
     if (confirmArea) confirmArea.style.display = 'none';
     signActive = false;
     predictionBuffer = [];
