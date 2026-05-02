@@ -151,7 +151,7 @@ def update_account():
 @account_bp.route("/account", methods=["DELETE"])
 def delete_account():
     token = get_token_from_request()
-    if not token:git rm -r --cached venv/
+    if not token:
 
         return jsonify({"error": "Token manquant"}), 401
 
