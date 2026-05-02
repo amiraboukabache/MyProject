@@ -151,11 +151,8 @@ def update_account():
 @account_bp.route("/account", methods=["DELETE"])
 def delete_account():
     token = get_token_from_request()
-    if not token:git add .
-git commit -m "feat: add /predict endpoint for sign language recognition"
-git push origin maingit add .
-git commit -m "feat: add /predict endpoint for sign language recognition"
-git push origin main
+    if not token:
+
         return jsonify({"error": "Token manquant"}), 401
 
     user = get_current_user(token)
