@@ -46,3 +46,35 @@ def get_profile():
         return jsonify({"error": "Profil introuvable"}), 404
 
     return jsonify(profiles[0]), 200
+
+
+# ─────────────────────────────────────────
+# 👥 GET USERS (filtrer par rôle)
+# ─────────────────────────────────────────
+@profile_bp.route("/users", methods=["GET"])
+def get_users():
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Token manquant"}), 401
+
+    token = auth_header.split(" ")[1]
+
+    user = get_current_user(token)
+    if not user:
+        return jsonify({"error": "Token invalide"}), 401
+
+    # Filtrer par rôle si spécifié
+    role = request.args.get("role")
+
+    if role:
+        url = f"{SUPABASE_URL}/rest/v1/users?role=eq.{role}&select=user_id,name,lastname,role"
+    else:
+        url = f"{SUPABASE_URL}/rest/v1/users?select=user_id,name,lastname,role"
+
+    res = requests.get(url, headers=db_headers)
+
+    # Exclure l'utilisateur connecté de la liste
+    current_user_id = user.get("id")
+    users = [u for u in res.json() if u.get("user_id") != current_user_id]
+
+    return jsonify(users), 200

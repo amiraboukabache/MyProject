@@ -4,6 +4,19 @@ import uuid
 from datetime import datetime, timezone
 from config import SUPABASE_URL, SUPABASE_KEY, firestore_db
 
+
+
+# Ajoute ces imports en haut avec les autres
+import pickle
+import numpy as np
+import mediapipe as mp
+import cv2
+import base64
+import os
+
+
+
+
 translation_bp = Blueprint("translation", __name__)
 
 
@@ -133,3 +146,79 @@ def delete_translation(translation_id):
     firestore_db.collection("Translation").document(translation_id).delete()
 
     return jsonify({"message": "Traduction supprimée avec succès"}), 200
+
+
+# ─────────────────────────────────────────
+# 🤖 PREDICT — Sign language recognition
+# ─────────────────────────────────────────
+
+# Charger le modèle une seule fois au démarrage du serveur
+MODEL_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'gesture_model.pkl')
+with open(MODEL_PATH, 'rb') as f:
+    gesture_model = pickle.load(f)
+
+mp_hands = mp.solutions.hands
+hands_detector = mp_hands.Hands(static_image_mode=True, max_num_hands=1)
+
+
+@translation_bp.route("/predict", methods=["POST"])
+def predict_sign():
+    token = get_token_from_request()
+    if not token:
+        return jsonify({"error": "Token manquant"}), 401
+
+    user = get_current_user(token)
+    if not user:
+        return jsonify({"error": "Token invalide"}), 401
+
+    data = request.get_json()
+    if not data or 'image' not in data:
+        return jsonify({"error": "No image provided"}), 400
+
+    try:
+        # Décoder l'image base64 envoyée depuis le frontend
+        img_b64 = data['image']
+        if ',' in img_b64:
+            img_b64 = img_b64.split(',')[1]
+
+        img_bytes = base64.b64decode(img_b64)
+        np_arr = np.frombuffer(img_bytes, np.uint8)
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            return jsonify({"error": "Image invalide"}), 400
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        result = hands_detector.process(frame_rgb)
+
+        if not result.multi_hand_landmarks:
+            return jsonify({
+                "prediction": None,
+                "confidence": 0,
+                "message": "No hand detected"
+            })
+
+        # Extraire les 21 landmarks (x, y, z) = 63 features
+        row = []
+        for lm in result.multi_hand_landmarks[0].landmark:
+            row.extend([lm.x, lm.y, lm.z])
+
+        proba = gesture_model.predict_proba([row])[0]
+        confidence = float(max(proba))
+        prediction = gesture_model.classes_[proba.argmax()]
+
+        # Seuil 60% — en dessous on rejette
+        if confidence < 0.60:
+            return jsonify({
+                "prediction": None,
+                "confidence": round(confidence, 2),
+                "message": "Low confidence"
+            })
+
+        return jsonify({
+            "prediction": prediction,
+            "confidence": round(confidence, 2)
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

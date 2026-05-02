@@ -152,6 +152,7 @@ def update_account():
 def delete_account():
     token = get_token_from_request()
     if not token:
+
         return jsonify({"error": "Token manquant"}), 401
 
     user = get_current_user(token)
