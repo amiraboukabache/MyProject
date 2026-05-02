@@ -1,5 +1,5 @@
 ﻿[phases.setup]
-providers = ["python"]
+nixPkgs = ["libxcb", "libGL"]
 
 [variables]
 PYTHON_VERSION = "3.11"
