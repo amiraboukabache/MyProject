@@ -1,1 +1,0 @@
-echo "[phases.setup]`nproviders = [`"python`"]`n`n[variables]`nPYTHON_VERSION = `"3.11`"" > nixpacks.toml
