@@ -329,6 +329,20 @@
           <button class="btn-cam btn-cam-cancel" onclick="cancelSignCamera()">Cancel</button>
           <button class="btn-cam btn-cam-send" id="sign-send-btn" onclick="sendSignMessage()">Send Sign</button>
         </div>
+
+
+<!-- Zone de confirmation -->
+<div id="sign-confirm-area" style="display:none; margin-top:12px; background:rgba(107,122,94,0.1); border-radius:12px; padding:14px 16px; align-items:center; justify-content:space-between; gap:12px;">
+  <div>
+    <div style="font-size:11px; color:var(--muted); margin-bottom:4px">Word detected</div>
+    <div id="sign-stable-label" style="font-size:22px; font-weight:700; color:var(--sage)"></div>
+  </div>
+  <button onclick="confirmAndSend()" style="background:var(--sage); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Outfit',sans-serif;">
+    ✓ Send
+  </button>
+</div>
+
+
       </div>
 
 
@@ -358,6 +372,8 @@
   // Sign camera state
   let signStream = null;
   let signActive = false;
+  let captureInterval = null;
+  let predictionBuffer = [];
 
   function logout() { localStorage.clear(); }
 
@@ -413,22 +429,17 @@
     document.getElementById('chat-input-area').style.display = 'block';
     document.getElementById('chat-area').classList.add('mobile-open');
 
-    // Stop any ongoing camera/recording when switching user
     stopAllMedia();
-
     lastMessageCount = 0;
     loadConversation(userId);
     startPolling();
   }
 
-  function stopAllMedia() {
-    cancelSignCamera();
-  }
+  function stopAllMedia() { cancelSignCamera(); }
 
   // ── CONVERSATION ──────────────────────────────────────
   async function loadConversation(userId) {
     const container = document.getElementById('chat-messages');
-    // IMPORTANT: Always clear the container first, show loading
     container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Loading...</div>';
     try {
       const res = await fetch(`${API}/messages/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -449,7 +460,6 @@
       container.scrollTop = container.scrollHeight;
     } catch (e) {
       container.innerHTML = `<div class="empty-state"><p>Failed to load conversation</p></div>`;
-      console.error('Error loading conversation:', e);
     }
   }
 
@@ -462,69 +472,108 @@
     document.getElementById('panel-' + mode).classList.add('visible');
   }
 
-  // ── SIGN CAMERA ───────────────────────────────────────
+  // ── SIGN CAMERA + PREDICT ─────────────────────────────
+  async function captureAndPredict() {
+    const video = document.getElementById('sign-feed');
+    if (!video || !signActive) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+    try {
+      const res = await fetch(`${API}/predict`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ image: imageBase64 })
+      });
+      const data = await res.json();
+
+      const ph = document.getElementById('sign-ph');
+
+      if (data.prediction) {
+        predictionBuffer.push(data.prediction);
+
+        // Feedback temps réel
+        if (ph) ph.querySelector('p').textContent =
+          `Detecting: ${data.prediction} (${Math.round(data.confidence * 100)}%)`;
+
+        // 5 frames stables = mot confirmé
+        if (predictionBuffer.length >= 5) {
+          const last5 = predictionBuffer.slice(-5);
+          const allSame = last5.every(p => p === last5[0]);
+          if (allSame) {
+            const confirmArea = document.getElementById('sign-confirm-area');
+            const stableLabel = document.getElementById('sign-stable-label');
+            if (stableLabel) stableLabel.textContent = last5[0];
+            if (confirmArea) confirmArea.style.display = 'flex';
+            // Reset buffer pour le prochain mot
+            predictionBuffer = [];
+          }
+        }
+      } else {
+        if (ph) ph.querySelector('p').textContent =
+          data.message || 'No hand detected — show your hand';
+      }
+    } catch (e) {
+      console.error('Prediction error:', e);
+    }
+  }
+
   async function toggleSignCamera() {
     const btn = document.getElementById('sign-btn');
     const ph = document.getElementById('sign-ph');
     const video = document.getElementById('sign-feed');
     const rec = document.getElementById('sign-rec-badge');
-    const sendBtn = document.getElementById('sign-send-btn');
 
     if (!signActive) {
       try {
         signStream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = signStream;
         video.style.display = 'block';
-        ph.style.display = 'none';
+        if (ph) { ph.style.display = 'flex'; ph.querySelector('p').textContent = 'Show your hand...'; }
         rec.style.display = 'flex';
         btn.textContent = 'Stop Camera';
-        sendBtn.style.display = 'block';
         signActive = true;
-      } catch (e) { alert('Camera access denied. Please allow camera access.'); }
+        predictionBuffer = [];
+        // Capturer une frame toutes les 500ms
+        captureInterval = setInterval(captureAndPredict, 500);
+      } catch (e) {
+        alert('Camera access denied. Please allow camera access.');
+      }
     } else {
       cancelSignCamera();
     }
   }
 
   function cancelSignCamera() {
+    if (captureInterval) { clearInterval(captureInterval); captureInterval = null; }
+    if (signStream) { signStream.getTracks().forEach(t => t.stop()); signStream = null; }
     const video = document.getElementById('sign-feed');
     const ph = document.getElementById('sign-ph');
     const rec = document.getElementById('sign-rec-badge');
     const btn = document.getElementById('sign-btn');
-    const sendBtn = document.getElementById('sign-send-btn');
-    if (signStream) { signStream.getTracks().forEach(t => t.stop()); signStream = null; }
-    if (video) { video.style.display = 'none'; }
-    if (ph) ph.style.display = 'flex';
+    const confirmArea = document.getElementById('sign-confirm-area');
+    if (video) video.style.display = 'none';
+    if (ph) { ph.style.display = 'flex'; ph.querySelector('p').textContent = 'Press Start to show your sign to the camera'; }
     if (rec) rec.style.display = 'none';
     if (btn) btn.textContent = 'Start Camera';
-    if (sendBtn) sendBtn.style.display = 'none';
+    if (confirmArea) confirmArea.style.display = 'none';
     signActive = false;
+    predictionBuffer = [];
   }
 
-  async function sendSignMessage() {
-    const text = "Sign gesture captured";
+  async function confirmAndSend() {
+    const word = document.getElementById('sign-stable-label').textContent;
+    if (!word || !currentReceiverId) return;
     cancelSignCamera();
-    appendMsg('sign', text, true);
-    await saveMessage(text, 'sign');
-  }
-
-  // ── TEXT ─────────────────────────────────────────────
-  async function sendTextMsg() {
-    const ta = document.getElementById('text-input');
-    const text = ta.value.trim();
-    if (!text || !currentReceiverId) return;
-    ta.value = ''; ta.style.height = '48px';
-    appendMsg('text', text, true);
-    await saveMessage(text, 'text');
-  }
-
-  function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTextMsg(); }
-  }
-
-  function autoResize(el) {
-    el.style.height = '48px';
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    appendMsg('sign', word, true);
+    await saveMessage(word, 'sign');
   }
 
   // ── SAVE / DELETE ─────────────────────────────────────
@@ -550,7 +599,6 @@
     } catch (e) { alert('Failed to delete message.'); }
   }
 
-  // Click anywhere outside messages to close delete buttons
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.msg')) {
       document.querySelectorAll('.msg.show-delete').forEach(m => m.classList.remove('show-delete'));
@@ -570,11 +618,9 @@
     const div = document.createElement('div');
     div.className = 'msg ' + (fromMe ? 'from-me' : 'from-them');
 
-    // Click on message toggles delete button visibility
     div.addEventListener('click', function(e) {
-      if (e.target.closest('.delete-btn')) return; // let delete btn handle itself
+      if (e.target.closest('.delete-btn')) return;
       if (!messageId) return;
-      // Close all others first
       document.querySelectorAll('.msg.show-delete').forEach(m => {
         if (m !== div) m.classList.remove('show-delete');
       });
@@ -613,7 +659,7 @@
     container.scrollTop = container.scrollHeight;
   }
 
-  // ── NOTIFICATIONS + POLLING ───────────────────────────
+  // ── POLLING ───────────────────────────────────────────
   async function requestNotifPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
       await Notification.requestPermission();
