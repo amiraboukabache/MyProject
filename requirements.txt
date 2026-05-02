@@ -4,3 +4,6 @@ requests
 python-dotenv
 firebase-admin
 gunicorn
+mediapipe
+opencv-python-headless
+numpy
