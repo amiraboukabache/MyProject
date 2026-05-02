@@ -11,7 +11,7 @@ from routes.activity import activity_bp
 import os
 
 app = Flask(__name__)
-CORS(app, origins="*")
+CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Authorization", "Content-Type"])
 
 # Enregistrer les routes
 app.register_blueprint(auth_bp)
