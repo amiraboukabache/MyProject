@@ -165,3 +165,31 @@ def delete_mappingdata(mappingdata_id):
         return jsonify({"error": "Échec de la suppression"}), 400
 
     return jsonify({"message": f"Mapping {mappingdata_id} supprimé avec succès"}), 200
+
+
+# ─────────────────────────────────────────
+# 🔍 RECHERCHER un mapping par texte
+# ─────────────────────────────────────────
+@mappingdata_bp.route("/mappingdata/search", methods=["GET"])
+def search_mappingdata():
+    token = get_token_from_request()
+    if not token:
+        return jsonify({"error": "Token manquant"}), 401
+
+    text = request.args.get("text", "").strip().lower()
+    if not text:
+        return jsonify({"error": "Texte manquant"}), 400
+
+    res = requests.get(
+        f"{SUPABASE_URL}/rest/v1/mappingdata?text_content=ilike.*{text}*&select=*&limit=1",
+        headers=db_headers
+    )
+    data = res.json()
+
+    if not data:
+        return jsonify({"content_url": None, "message": "Aucun signe trouvé"}), 200
+
+    return jsonify({
+        "content_url": data[0]["content_url"],
+        "text_content": data[0]["text_content"]
+    }), 200
