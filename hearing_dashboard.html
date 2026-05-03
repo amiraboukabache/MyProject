@@ -393,7 +393,7 @@
       recognition = new SR();
       recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = false;
       recognition.onresult = async (e) => {
-        const text = e.results[0][0].transcript;
+        const text = e.results[0][0].transcript.trim().replace(/[.,!?;]+$/g, '');
         cancelVoice();
         try {
           const mapRes = await fetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`, { headers: { 'Authorization': `Bearer ${token}` } });
