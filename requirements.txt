@@ -2,6 +2,7 @@ flask
 flask-cors
 requests
 python-dotenv
+firebase-admin
 gunicorn
 numpy
 mediapipe
