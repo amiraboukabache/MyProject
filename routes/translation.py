@@ -147,16 +147,46 @@ def predict_sign():
     if not user:
         return jsonify({"error": "Token invalide"}), 401
 
-    # Import ici pour eviter crash au demarrage si libs absentes
     try:
         import pickle
         import numpy as np
-        import mediapipe as mp
-        import cv2
-        import base64
         import os
     except ImportError as e:
         return jsonify({"error": f"Library not available: {str(e)}"}), 500
+
+    data = request.get_json()
+    if not data or 'landmarks' not in data:
+        return jsonify({"error": "No landmarks provided"}), 400
+
+    try:
+        MODEL_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'gesture_model.pkl')
+        with open(MODEL_PATH, 'rb') as f:
+            gesture_model = pickle.load(f)
+
+        row = data['landmarks']
+
+        if len(row) != 63:
+            return jsonify({"error": f"Expected 63 landmarks, got {len(row)}"}), 400
+
+        row = np.array(row).reshape(1, -1)
+        proba = gesture_model.predict_proba(row)[0]
+        confidence = float(max(proba))
+        prediction = gesture_model.classes_[proba.argmax()]
+
+        if confidence < 0.60:
+            return jsonify({
+                "prediction": None,
+                "confidence": round(confidence, 2),
+                "message": "Low confidence"
+            })
+
+        return jsonify({
+            "prediction": prediction,
+            "confidence": round(confidence, 2)
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
     data = request.get_json()
     if not data or 'image' not in data:
