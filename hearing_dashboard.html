@@ -418,16 +418,22 @@
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SR();
       recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = false;
-      recognition.onresult = async (e) => {
-        const text = e.results[0][0].transcript;
-        cancelVoice();
-        try {
-          const mapRes = await fetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`, { headers: { 'Authorization': `Bearer ${token}` } });
-          const mapData = await mapRes.json();
-          appendMsg('voice', text, true, mapData.content_url || null);
-          await saveMessage(text, 'voice', mapData.content_url || null);
-        } catch { appendMsg('voice', text, true); await saveMessage(text, 'voice'); }
-      };
+   recognition.onresult = async (e) => {
+  const text = e.results[0][0].transcript;
+  cancelVoice();
+  try {
+    const mapRes = await fetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const mapData = await mapRes.json();
+    const videoUrl = mapData.content_url || null;
+    // Show text + video bubble
+    appendMsg('voice', text, true, videoUrl);
+    await saveMessage(text, 'voice', videoUrl);
+  } catch (err) {
+    console.error('Search error:', err);
+    appendMsg('voice', text, true, null);
+    await saveMessage(text, 'voice', null);
+  }
+};
       recognition.onerror = () => cancelVoice();
       recognition.start();
       isRecording = true; btn.textContent = 'Stop Recording'; btn.style.background = '#8a2535';
@@ -497,11 +503,18 @@
     if (type === 'sign') {
       div.innerHTML = `<div class="sign-received"><svg viewBox="0 0 24 24"><path d="M21 6.5c0-1.1-.9-2-2-2h-2V3c0-1.1-.9-2-2-2s-2 .9-2 2v1H9V3c0-1.1-.9-2-2-2S5 1.9 5 3v1.5H3c-1.1 0-2 .9-2 2v15c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6.5z"/></svg><div class="sign-label"><strong>Sign Message</strong><span>"${text}"</span></div></div><div class="msg-meta">${currentReceiverName} · ${now}</div>${deleteBtn}`;
     } else if (mediaUrl) {
-      const isVideo = mediaUrl.match(/\.(mp4|webm|mov)$/i);
-      div.innerHTML = `<div class="msg-bubble" style="padding:8px"><div style="font-size:11px;opacity:0.7;margin-bottom:6px">${type==='voice'?'Voice':'Text'}: "${text}"</div>${isVideo?`<video src="${mediaUrl}" controls style="max-width:180px;border-radius:10px;display:block"></video>`:`<img src="${mediaUrl}" alt="sign" style="max-width:180px;border-radius:10px;display:block">`}</div><div class="msg-meta">You · ${now}</div>${deleteBtn}`;
-    } else {
-      div.innerHTML = `<div class="msg-bubble">${type==='voice'?`<span style="font-size:11px;opacity:0.7;display:block;margin-bottom:4px">🎙 Voice message</span>`:''}${text}</div><div class="msg-meta">${fromMe?'You':currentReceiverName} · ${now}</div>${deleteBtn}`;
-    }
+  const isVideo = mediaUrl.match(/\.(mp4|webm|mov)$/i);
+  div.innerHTML = `
+    <div class="msg-bubble" style="padding:10px">
+      <div style="font-size:11px;opacity:0.7;margin-bottom:8px">
+        ${type==='voice'?'🎙️':'✏️'} "${text}"
+      </div>
+      ${isVideo
+        ? `<video src="${mediaUrl}" controls autoplay muted style="max-width:220px;border-radius:10px;display:block"></video>`
+        : `<img src="${mediaUrl}" alt="sign" style="max-width:220px;border-radius:10px;display:block">`
+      }
+    </div>
+    <div class="msg-meta">You · ${now}</div>${deleteBtn}`;
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
   }
