@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BridgeSign — Deaf Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js"></script>
   <style>
     :root {
       --ink: #1A1B26; --sage: #6B7A5E; --sage-lt: #8A9A74;
@@ -15,7 +16,6 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Outfit', sans-serif; background: var(--cream); color: var(--ink); display: flex; height: 100vh; overflow: hidden; }
 
-    /* SIDEBAR */
     .sidebar { width: var(--sb); background: var(--ink); display: flex; flex-direction: column; padding: 26px 18px; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
     .logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 38px; }
     .logo-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--sage); display: flex; align-items: center; justify-content: center; }
@@ -34,10 +34,8 @@
     .u-name { font-size: 13px; font-weight: 600; color: var(--white); }
     .u-role { font-size: 11px; color: rgba(255,255,255,0.35); }
 
-    /* MAIN */
     .main { margin-left: var(--sb); flex: 1; display: flex; height: 100vh; overflow: hidden; }
 
-    /* USERS PANEL */
     .users-panel { width: 300px; flex-shrink: 0; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
     .users-header { padding: 22px 20px 16px; border-bottom: 1px solid var(--border); }
     .users-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; margin-bottom: 14px; }
@@ -58,7 +56,6 @@
     .no-users svg { width: 36px; height: 36px; fill: none; stroke: var(--ink); stroke-width: 1.5; }
     .no-users p { font-size: 13px; font-weight: 600; }
 
-    /* CHAT AREA */
     .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--cream); min-width: 0; }
     .chat-header { background: var(--white); padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .chat-user-info { display: flex; align-items: center; gap: 13px; }
@@ -69,7 +66,6 @@
     .icon-btn:hover { background: rgba(107,122,94,0.15); }
     .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: var(--ink); stroke-width: 1.8; }
 
-    /* MESSAGES */
     .chat-messages { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
     .select-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
     .select-state svg { width: 64px; height: 64px; fill: none; stroke: rgba(107,122,94,0.3); stroke-width: 1.2; }
@@ -80,7 +76,6 @@
     .empty-state p { font-size: 15px; font-weight: 600; }
     .empty-state span { font-size: 13px; color: var(--muted); text-align: center; max-width: 240px; }
 
-    /* MESSAGE BUBBLES */
     .msg { display: flex; flex-direction: column; max-width: 68%; position: relative; }
     .msg.from-me { align-self: flex-end; align-items: flex-end; }
     .msg.from-them { align-self: flex-start; align-items: flex-start; }
@@ -95,27 +90,13 @@
     .msg-media video, .msg-media img { width: 100%; border-radius: 12px; display: block; }
     .msg-meta { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
 
-    /* DELETE BUTTON — toggled via JS click, not CSS hover */
-    .delete-btn {
-      display: none;
-      position: absolute;
-      top: 4px;
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(192,57,43,0.25);
-      border-radius: 6px;
-      cursor: pointer;
-      padding: 5px;
-      opacity: 1;
-      z-index: 20;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-    }
+    .delete-btn { display: none; position: absolute; top: 4px; background: rgba(255,255,255,0.92); border: 1px solid rgba(192,57,43,0.25); border-radius: 6px; cursor: pointer; padding: 5px; opacity: 1; z-index: 20; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
     .from-me .delete-btn { right: -34px; }
     .from-them .delete-btn { left: -34px; right: auto; }
     .delete-btn svg { width: 14px; height: 14px; fill: none; stroke: #c0392b; stroke-width: 2; display: block; }
     .delete-btn:hover { background: rgba(192,57,43,0.1); }
     .msg.show-delete .delete-btn { display: block; }
 
-    /* INPUT BAR */
     .chat-input-area { background: var(--white); border-top: 1px solid var(--border); padding: 16px 24px; flex-shrink: 0; }
     .input-mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
     .imt { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 50px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; border: 1.5px solid var(--border); background: var(--cream); color: var(--muted); font-family: 'Outfit', sans-serif; }
@@ -125,40 +106,25 @@
     .input-panel { display: none; }
     .input-panel.visible { display: block; }
 
-    /* CAMERA / SIGN PANEL */
     .cam-view { background: var(--ink); border-radius: 12px; height: 160px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; position: relative; overflow: hidden; }
-    .cam-view video { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: none; }
+    .cam-view video { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: none; transform: scaleX(-1); }
     .cam-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .cam-placeholder svg { width: 36px; height: 36px; fill: none; stroke: rgba(255,255,255,0.35); stroke-width: 1.5; }
     .cam-placeholder p { font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; padding: 0 16px; }
-    .rec-badge { position: absolute; top: 10px; right: 10px; background: var(--burg); color: var(--white); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 50px; display: none; align-items: center; gap: 5px; }
-    .rec-dot { width: 6px; height: 6px; background: var(--white); border-radius: 50%; animation: blink 1s infinite; }
+    .rec-badge { position: absolute; top: 10px; right: 10px; background: var(--sage); color: var(--white); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 50px; display: none; align-items: center; gap: 5px; max-width: 200px; }
+    .rec-dot { width: 6px; height: 6px; background: var(--white); border-radius: 50%; animation: blink 1s infinite; flex-shrink: 0; }
     @keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
-    .mode-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: var(--white); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 50px; display: none; }
-    .snapshot-preview { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: none; position: absolute; inset: 0; }
     .cam-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .btn-cam { flex: 1; min-width: 100px; padding: 11px; border-radius: 12px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all .2s; }
     .btn-cam-go { background: var(--sage); color: var(--white); }
     .btn-cam-go:hover { background: var(--sage-lt); }
-    .btn-cam-snap { background: var(--ink); color: var(--white); }
-    .btn-cam-snap:hover { background: #2d2f40; }
     .btn-cam-send { background: var(--burg); color: var(--white); display: none; }
     .btn-cam-send:hover { background: #8a2535; }
     .btn-cam-cancel { background: rgba(107,30,46,0.08); color: var(--burg); }
-    .btn-cam-retake { background: rgba(107,122,94,0.12); color: var(--sage); display: none; }
-
-    /* TEXT PANEL */
-    .text-row { display: flex; gap: 10px; align-items: flex-end; }
-    .msg-textarea { flex: 1; padding: 12px 15px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--ink); background: var(--cream); resize: none; outline: none; transition: border-color .2s; height: 48px; max-height: 120px; }
-    .msg-textarea:focus { border-color: var(--sage); }
-    .btn-send { width: 48px; height: 48px; border-radius: 12px; border: none; cursor: pointer; background: var(--sage); color: var(--white); display: flex; align-items: center; justify-content: center; transition: background .2s; flex-shrink: 0; }
-    .btn-send:hover { background: var(--sage-lt); }
-    .btn-send svg { width: 18px; height: 18px; fill: none; stroke: white; stroke-width: 2; }
 
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: rgba(107,122,94,0.25); border-radius: 10px; }
 
-    /* ── MOBILE RESPONSIVE ── */
     .mobile-topbar { display: none; }
     .back-btn { display: none; }
 
@@ -166,32 +132,19 @@
       body { flex-direction: column; }
       .sidebar { display: none; }
       .main { margin-left: 0; flex-direction: column; height: 100vh; overflow: hidden; }
-
-      .mobile-topbar {
-        display: flex; align-items: center; justify-content: space-between;
-        background: var(--ink); padding: 13px 16px; flex-shrink: 0;
-      }
+      .mobile-topbar { display: flex; align-items: center; justify-content: space-between; background: var(--ink); padding: 13px 16px; flex-shrink: 0; }
       .mobile-topbar-logo { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: var(--white); }
       .mobile-topbar-logo em { color: var(--rose); font-style: normal; }
       .mobile-topbar-right { display: flex; align-items: center; gap: 8px; }
       .mobile-topbar-name { font-size: 12px; color: rgba(255,255,255,0.5); }
       .mobile-logout { background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; font-family: 'Outfit', sans-serif; }
-
       .users-panel { width: 100%; flex: 1; border-right: none; overflow: hidden; display: flex; flex-direction: column; }
       .users-header { padding: 14px 16px 10px; }
       .users-list { flex: 1; overflow-y: auto; }
-
       .chat-area { display: none; position: fixed; inset: 0; z-index: 40; flex-direction: column; background: var(--cream); }
       .chat-area.mobile-open { display: flex; }
-
-      .back-btn {
-        display: flex; align-items: center; gap: 5px;
-        background: none; border: none; cursor: pointer;
-        color: var(--sage); font-size: 13px; font-weight: 600;
-        font-family: 'Outfit', sans-serif; margin-right: 8px; flex-shrink: 0;
-      }
+      .back-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; color: var(--sage); font-size: 13px; font-weight: 600; font-family: 'Outfit', sans-serif; margin-right: 8px; flex-shrink: 0; }
       .back-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--sage); stroke-width: 2.5; }
-
       .chat-header { padding: 10px 14px; }
       .chat-messages { padding: 14px 16px; }
       .chat-input-area { padding: 10px 14px; }
@@ -213,7 +166,6 @@
 </head>
 <body>
 
-<!-- SIDEBAR (desktop only) -->
 <aside class="sidebar">
   <a href="index.html" class="logo">
     <div class="logo-mark">
@@ -248,10 +200,7 @@
   </div>
 </aside>
 
-<!-- MAIN -->
 <div class="main">
-
-  <!-- MOBILE TOPBAR -->
   <div class="mobile-topbar">
     <div class="mobile-topbar-logo">Bridge<em>Sign</em></div>
     <div class="mobile-topbar-right">
@@ -260,7 +209,6 @@
     </div>
   </div>
 
-  <!-- USERS LIST -->
   <div class="users-panel">
     <div class="users-header">
       <h2>Conversations</h2>
@@ -277,7 +225,6 @@
     </div>
   </div>
 
-  <!-- CHAT AREA -->
   <div class="chat-area" id="chat-area">
     <div class="chat-header">
       <div class="chat-user-info">
@@ -305,7 +252,6 @@
       </div>
     </div>
 
-    <!-- INPUT BAR -->
     <div class="chat-input-area" id="chat-input-area" style="display:none">
       <div class="input-mode-tabs">
         <button class="imt active" id="tab-sign" onclick="setMode('sign', this)">
@@ -314,7 +260,6 @@
         </button>
       </div>
 
-      <!-- SIGN PANEL (live camera → send sign message) -->
       <div class="input-panel visible" id="panel-sign">
         <div class="cam-view" id="sign-cam-view">
           <video id="sign-feed" autoplay playsinline muted></video>
@@ -322,7 +267,7 @@
             <svg viewBox="0 0 24 24"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>
             <p>Press Start to show your sign to the camera</p>
           </div>
-          <div class="rec-badge" id="sign-rec-badge"><div class="rec-dot"></div> LIVE</div>
+          <div class="rec-badge" id="sign-rec-badge"><div class="rec-dot"></div> <span id="rec-text">LIVE</span></div>
         </div>
         <div class="cam-actions">
           <button class="btn-cam btn-cam-go" id="sign-btn" onclick="toggleSignCamera()">Start Camera</button>
@@ -330,13 +275,17 @@
           <button class="btn-cam btn-cam-send" id="sign-send-btn" onclick="sendSignMessage()">Send Sign</button>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
 <script>
-  const API = 'https://myproject-production-c78f.up.railway.app';
+  // ── CONFIGURATION ──
+  // API        = Railway  → users, messages
+  // PREDICT_API = ngrok   → predict_server.py local (prediction seulement)
+   const API = 'https://myproject-production-c78f.up.railway.app'; // TON URL RAILWAY ICI
+  const PREDICT_API = 'https://country-carbon-denatured.ngrok-free.dev'; // URL ngrok (changer à chaque session)
+
   const token = localStorage.getItem('bs_token');
   const profile = JSON.parse(localStorage.getItem('bs_profile') || 'null');
 
@@ -346,7 +295,6 @@
   const mun = document.getElementById('mobile-user-name');
   if (mun) mun.textContent = profile?.name || '';
 
-  // ── STATE ─────────────────────────────────────────────
   let currentReceiverId = null;
   let currentReceiverName = null;
   let allUsers = [];
@@ -354,41 +302,54 @@
   let pollTimer = null;
   let knownMessageIds = new Set();
 
-  // Sign camera state
+  // ── MediaPipe state ──
   let signStream = null;
   let signActive = false;
-  let predictInterval = null;
   let lastPrediction = null;
-
-  const NGROK_URL = 'https://country-carbon-denatured.ngrok-free.app';
+  let handsDetector = null;
+  let currentLandmarks = null;
+  let predictInterval = null;
 
   function logout() { localStorage.clear(); }
+  function goBackToList() { document.getElementById('chat-area').classList.remove('mobile-open'); }
 
-  function goBackToList() {
-    document.getElementById('chat-area').classList.remove('mobile-open');
+  // ── Init MediaPipe Hands ──
+  function initMediaPipe() {
+    handsDetector = new Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`
+    });
+    handsDetector.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+    handsDetector.onResults((results) => {
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+        const row = [];
+        landmarks.forEach(lm => row.push(lm.x, lm.y, lm.z));
+        currentLandmarks = row;
+      } else {
+        currentLandmarks = null;
+      }
+    });
   }
 
-  // ── USERS ─────────────────────────────────────────────
+  // ── Users ──
   async function loadUsers() {
     try {
       const res = await fetch(`${API}/users?role=hearing`, { headers: { 'Authorization': `Bearer ${token}` } });
       allUsers = await res.json();
       renderUsers(allUsers);
     } catch (e) {
-      document.getElementById('users-list').innerHTML = `
-        <div class="no-users">
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
-          <p>Error loading users</p>
-        </div>`;
+      document.getElementById('users-list').innerHTML = `<div class="no-users"><p>Error loading users</p></div>`;
     }
   }
 
   function renderUsers(users) {
     const list = document.getElementById('users-list');
-    if (!users.length) {
-      list.innerHTML = `<div class="no-users"><p>No hearing users found</p></div>`;
-      return;
-    }
+    if (!users.length) { list.innerHTML = `<div class="no-users"><p>No hearing users found</p></div>`; return; }
     list.innerHTML = users.map(u => `
       <div class="user-item" onclick="selectUser('${u.user_id}', '${u.name} ${u.lastname}', this)">
         <div class="user-av">${u.name.charAt(0).toUpperCase()}</div>
@@ -406,73 +367,53 @@
   function selectUser(userId, userName, el) {
     currentReceiverId = userId;
     currentReceiverName = userName;
-
     document.querySelectorAll('.user-item').forEach(i => i.classList.remove('active'));
     el.classList.add('active');
-
     document.getElementById('chat-av').textContent = userName.charAt(0).toUpperCase();
     document.getElementById('chat-contact-name').textContent = userName;
     document.getElementById('chat-status').textContent = 'Hearing User';
     document.getElementById('chat-input-area').style.display = 'block';
     document.getElementById('chat-area').classList.add('mobile-open');
-
-    // Stop any ongoing camera/recording when switching user
-    stopAllMedia();
-
+    cancelSignCamera();
     lastMessageCount = 0;
     loadConversation(userId);
     startPolling();
   }
 
-  function stopAllMedia() {
-    cancelSignCamera();
-  }
-
-  // ── CONVERSATION ──────────────────────────────────────
+  // ── Conversation ──
   async function loadConversation(userId) {
     const container = document.getElementById('chat-messages');
-    // IMPORTANT: Always clear the container first, show loading
     container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Loading...</div>';
     try {
       const res = await fetch(`${API}/messages/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
       const messages = await res.json();
       container.innerHTML = '';
       if (!Array.isArray(messages) || !messages.length) {
-        // ✅ FIX: Always show "No history available" for new/empty conversation
-        container.innerHTML = `
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-            <p>No history available</p>
-            <span>Start the conversation by signing, recording, or typing a message.</span>
-          </div>`;
+        container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><p>No history available</p><span>Start the conversation by showing a sign to the camera.</span></div>`;
         return;
       }
-      messages.forEach(m => {
-        const fromMe = m.sender_id === profile.user_id;
-        appendMsg(m.type, m.content, fromMe, m.media_url, m.date, m.message_id);
-      });
+      messages.forEach(m => appendMsg(m.type, m.content, m.sender_id === profile.user_id, m.media_url, m.date, m.message_id));
       container.scrollTop = container.scrollHeight;
     } catch (e) {
       container.innerHTML = `<div class="empty-state"><p>Failed to load conversation</p></div>`;
-      console.error('Error loading conversation:', e);
     }
   }
 
-  // ── INPUT MODES ───────────────────────────────────────
   function setMode(mode, btn) {
-    stopAllMedia();
+    cancelSignCamera();
     document.querySelectorAll('.imt').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.input-panel').forEach(p => p.classList.remove('visible'));
     document.getElementById('panel-' + mode).classList.add('visible');
   }
 
-  // ── SIGN CAMERA ───────────────────────────────────────
+  // ── Sign Camera with MediaPipe ──
   async function toggleSignCamera() {
     const btn = document.getElementById('sign-btn');
     const ph = document.getElementById('sign-ph');
     const video = document.getElementById('sign-feed');
     const rec = document.getElementById('sign-rec-badge');
+    const recText = document.getElementById('rec-text');
     const sendBtn = document.getElementById('sign-send-btn');
 
     if (!signActive) {
@@ -486,48 +427,48 @@
         sendBtn.style.display = 'block';
         signActive = true;
         lastPrediction = null;
+        currentLandmarks = null;
 
-        // Start capturing frames and predicting every 800ms
+        if (!handsDetector) initMediaPipe();
+
         predictInterval = setInterval(async () => {
-          const result = await captureAndPredict(video);
-          if (result && result.prediction) {
-            lastPrediction = result.prediction;
-            const confidence = Math.round(result.confidence * 100);
-            rec.innerHTML = `<div class="rec-dot"></div> ${result.prediction} (${confidence}%)`;
+          if (!signActive || !video.videoWidth) return;
+          try { await handsDetector.send({ image: video }); } catch (e) {}
+
+          if (currentLandmarks) {
+            const result = await predictFromLandmarks(currentLandmarks);
+            if (result && result.prediction) {
+              lastPrediction = result.prediction;
+              const conf = Math.round(result.confidence * 100);
+              recText.textContent = `${result.prediction} (${conf}%)`;
+            } else {
+              recText.textContent = 'No sign detected';
+            }
           } else {
-            rec.innerHTML = `<div class="rec-dot"></div> No hand detected`;
+            recText.textContent = 'Show your hand';
           }
         }, 800);
 
-      } catch (e) { alert('Camera access denied. Please allow camera access.'); }
+      } catch (e) {
+        alert('Camera access denied. Please allow camera access.');
+      }
     } else {
       cancelSignCamera();
     }
   }
 
-  async function captureAndPredict(video) {
+  // ── Predict → ngrok → predict_server.py local ──
+  async function predictFromLandmarks(landmarks) {
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      const ctx = canvas.getContext('2d');
-      // Mirror fix — draw normally (not flipped)
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const base64Image = canvas.toDataURL('image/jpeg', 0.95);
-
-      const res = await fetch(`${NGROK_URL}/predict`, {
+      const res = await fetch(`${PREDICT_API}/predict`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'  // ✅ bypass ngrok warning page
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ image: base64Image })
+        body: JSON.stringify({ landmarks })
       });
-
-      if (!res.ok) {
-        console.error('Predict server error:', res.status);
-        return null;
-      }
+      if (!res.ok) return null;
       return await res.json();
     } catch (e) {
       console.error('Prediction error:', e);
@@ -541,29 +482,25 @@
     const rec = document.getElementById('sign-rec-badge');
     const btn = document.getElementById('sign-btn');
     const sendBtn = document.getElementById('sign-send-btn');
+    const recText = document.getElementById('rec-text');
     clearInterval(predictInterval);
     predictInterval = null;
     if (signStream) { signStream.getTracks().forEach(t => t.stop()); signStream = null; }
     if (video) video.style.display = 'none';
     if (ph) ph.style.display = 'flex';
-    if (rec) { rec.style.display = 'none'; rec.innerHTML = `<div class="rec-dot"></div> LIVE`; }
+    if (rec) rec.style.display = 'none';
+    if (recText) recText.textContent = 'LIVE';
     if (btn) btn.textContent = 'Start Camera';
     if (sendBtn) sendBtn.style.display = 'none';
     signActive = false;
     lastPrediction = null;
+    currentLandmarks = null;
   }
 
   async function sendSignMessage() {
     if (!lastPrediction) {
-      // Try one last capture before giving up
-      const video = document.getElementById('sign-feed');
-      const result = await captureAndPredict(video);
-      if (result && result.prediction) {
-        lastPrediction = result.prediction;
-      } else {
-        alert('No sign detected yet. Show your hand clearly to the camera.');
-        return;
-      }
+      alert('No sign detected yet. Show your hand clearly to the camera.');
+      return;
     }
     const text = lastPrediction;
     cancelSignCamera();
@@ -571,7 +508,7 @@
     await saveMessage(text, 'sign');
   }
 
-  // ── SAVE / DELETE ─────────────────────────────────────
+  // ── Save / Delete → Railway ──
   async function saveMessage(content, type, mediaUrl = null) {
     if (!currentReceiverId) return;
     try {
@@ -586,90 +523,55 @@
   async function deleteMessage(messageId, divEl) {
     if (!confirm('Delete this message?')) return;
     try {
-      await fetch(`${API}/messages/${messageId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      await fetch(`${API}/messages/${messageId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
       divEl.remove();
     } catch (e) { alert('Failed to delete message.'); }
   }
 
-  // Click anywhere outside messages to close delete buttons
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.msg')) {
       document.querySelectorAll('.msg.show-delete').forEach(m => m.classList.remove('show-delete'));
     }
   });
 
-  // ── APPEND MESSAGE ────────────────────────────────────
+  // ── Append Message ──
   function appendMsg(type, text, fromMe, mediaUrl = null, timestamp = null, messageId = null) {
     const container = document.getElementById('chat-messages');
     document.getElementById('select-state')?.remove();
     document.querySelector('.empty-state')?.remove();
-
     const now = timestamp
       ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
     const div = document.createElement('div');
     div.className = 'msg ' + (fromMe ? 'from-me' : 'from-them');
-
-    // Click on message toggles delete button visibility
     div.addEventListener('click', function(e) {
-      if (e.target.closest('.delete-btn')) return; // let delete btn handle itself
+      if (e.target.closest('.delete-btn')) return;
       if (!messageId) return;
-      // Close all others first
-      document.querySelectorAll('.msg.show-delete').forEach(m => {
-        if (m !== div) m.classList.remove('show-delete');
-      });
+      document.querySelectorAll('.msg.show-delete').forEach(m => { if (m !== div) m.classList.remove('show-delete'); });
       div.classList.toggle('show-delete');
     });
-
-    const deleteBtn = messageId ? `
-      <button class="delete-btn" title="Delete message" onclick="deleteMessage('${messageId}', this.closest('.msg'))">
-        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </button>` : '';
+    const deleteBtn = messageId ? `<button class="delete-btn" title="Delete message" onclick="deleteMessage('${messageId}', this.closest('.msg'))"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>` : '';
 
     if (type === 'sign') {
-      div.innerHTML = `
-        <div class="msg-sign-bubble">
-          <svg viewBox="0 0 24 24"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>
-          <div class="sign-label"><strong>Sign Message</strong><span>"${text}"</span></div>
-        </div>
-        <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
+      div.innerHTML = `<div class="msg-sign-bubble"><svg viewBox="0 0 24 24"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg><div class="sign-label"><strong>Sign Message</strong><span>"${text}"</span></div></div><div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
     } else if (mediaUrl) {
       const isVideo = mediaUrl.match(/\.(mp4|webm|mov)$/i);
-      div.innerHTML = `
-        <div class="msg-media">
-          ${isVideo
-            ? `<video src="${mediaUrl}" controls style="width:100%;border-radius:12px"></video>`
-            : `<img src="${mediaUrl}" alt="sign" style="width:100%;border-radius:12px">`
-          }
-        </div>
-        <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
+      div.innerHTML = `<div class="msg-media">${isVideo ? `<video src="${mediaUrl}" controls style="width:100%;border-radius:12px"></video>` : `<img src="${mediaUrl}" alt="sign" style="width:100%;border-radius:12px">`}</div><div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
     } else {
-      div.innerHTML = `
-        <div class="msg-bubble">${text}</div>
-        <div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
+      div.innerHTML = `<div class="msg-bubble">${text}</div><div class="msg-meta">${fromMe ? 'You' : currentReceiverName} · ${now}</div>${deleteBtn}`;
     }
-
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
   }
 
-  // ── NOTIFICATIONS + POLLING ───────────────────────────
+  // ── Polling ──
   async function requestNotifPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission();
-    }
+    if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
   }
 
   function showNotif(senderName, text) {
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(`New message from ${senderName}`, {
-        body: text.length > 60 ? text.substring(0, 60) + '...' : text,
-        icon: 'https://bridgsign.netlify.app/favicon.ico'
-      });
+      new Notification(`New message from ${senderName}`, { body: text.length > 60 ? text.substring(0, 60) + '...' : text });
     }
   }
 
@@ -678,22 +580,18 @@
       const res = await fetch(`${API}/messages/history`, { headers: { 'Authorization': `Bearer ${token}` } });
       const messages = await res.json();
       if (!Array.isArray(messages)) return;
-
       const isFirstLoad = knownMessageIds.size === 0;
       messages.forEach(m => {
         if (!knownMessageIds.has(m.message_id)) {
           knownMessageIds.add(m.message_id);
-          if (!isFirstLoad && m.sender_id !== profile.user_id) {
-            showNotif('Hearing User', m.content);
-          }
+          if (!isFirstLoad && m.sender_id !== profile.user_id) showNotif('Hearing User', m.content);
         }
       });
-
       if (currentReceiverId) {
         const convRes = await fetch(`${API}/messages/${currentReceiverId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const convMsgs = await convRes.json();
         if (!Array.isArray(convMsgs)) return;
-        if (convMsgs.length > lastMessageCount) {
+        if (convMsgs.length !== lastMessageCount)  {
           const container = document.getElementById('chat-messages');
           const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
           container.innerHTML = '';

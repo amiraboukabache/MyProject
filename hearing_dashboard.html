@@ -407,7 +407,7 @@
           await saveMessage(text, 'voice', null);
         }
       };
-      recognition.onerror = () => cancelVoice();
+      recognition.onerror = (e) => { console.log('Speech error:', e.error); alert('Mic error: ' + e.error); cancelVoice(); };
       recognition.start();
       isRecording = true; btn.textContent = 'Stop Recording'; btn.style.background = '#8a2535';
       status.textContent = 'Listening...';
