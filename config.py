@@ -22,6 +22,11 @@ auth_headers = {
 }
 
 # ─── Firebase / Firestore ───
-cred = credentials.Certificate(os.getenv("FIREBASE_CREDENTIALS", "firebase_credentials.json"))
+import json
+firebase_creds = os.getenv("FIREBASE_CREDENTIALS")
+if firebase_creds:
+    cred = credentials.Certificate(json.loads(firebase_creds))
+else:
+    cred = credentials.Certificate("firebase_credentials.json")
 firebase_admin.initialize_app(cred)
 firestore_db = firestore.client()
