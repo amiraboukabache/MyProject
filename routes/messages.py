@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from firebase_admin import firestore
 import requests
-import uuid
+import uuid 
+import time
 from datetime import datetime, timezone
 from config import SUPABASE_URL, SUPABASE_KEY, firestore_db
 
@@ -151,6 +152,8 @@ def delete_message(message_id):
 # ─────────────────────────────────────────
 #  VOIR l'historique (toutes les conversations)
 # ─────────────────────────────────────────
+history_cache = {}
+
 @messages_bp.route("/messages/history", methods=["GET"])
 def get_history():
     token = get_token_from_request()
@@ -163,12 +166,17 @@ def get_history():
 
     user_id = user.get("id")
 
-    # Messages envoyés
+    cache_key = user_id
+    now = time.time()
+    if cache_key in history_cache:
+        cached_data, cached_time = history_cache[cache_key]
+        if now - cached_time < 30:
+            return jsonify(cached_data), 200
+
     sent = firestore_db.collection("Messages")\
         .where("sender_id", "==", user_id)\
         .stream()
 
-    # Messages reçus
     received = firestore_db.collection("Messages")\
         .where("receiver_id", "==", user_id)\
         .stream()
@@ -179,8 +187,51 @@ def get_history():
     for msg in received:
         messages.append(msg.to_dict())
 
-    # Trier par date
     messages.sort(key=lambda x: x.get("date", ""))
+
+    history_cache[cache_key] = (messages, now)
+
+    if not messages:
+        return jsonify({"message": "Aucun historique disponible"}), 200
+
+    return jsonify(messages), 200history_cache = {}
+
+@messages_bp.route("/messages/history", methods=["GET"])
+def get_history():
+    token = get_token_from_request()
+    if not token:
+        return jsonify({"error": "Token manquant"}), 401
+
+    user = get_user_from_token(token)
+    if not user:
+        return jsonify({"error": "Token invalide"}), 401
+
+    user_id = user.get("id")
+
+    cache_key = user_id
+    now = time.time()
+    if cache_key in history_cache:
+        cached_data, cached_time = history_cache[cache_key]
+        if now - cached_time < 30:
+            return jsonify(cached_data), 200
+
+    sent = firestore_db.collection("Messages")\
+        .where("sender_id", "==", user_id)\
+        .stream()
+
+    received = firestore_db.collection("Messages")\
+        .where("receiver_id", "==", user_id)\
+        .stream()
+
+    messages = []
+    for msg in sent:
+        messages.append(msg.to_dict())
+    for msg in received:
+        messages.append(msg.to_dict())
+
+    messages.sort(key=lambda x: x.get("date", ""))
+
+    history_cache[cache_key] = (messages, now)
 
     if not messages:
         return jsonify({"message": "Aucun historique disponible"}), 200
