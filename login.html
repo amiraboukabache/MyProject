@@ -15,7 +15,6 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--dark); min-height: 100vh; display: flex; }
 
-    /* LEFT PANEL */
     .left-panel {
       width: 45%; background: var(--dark);
       display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
@@ -36,16 +35,13 @@
     .left-feature-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .left-feature-icon svg { width: 18px; height: 18px; fill: none; stroke: rgba(255,255,255,0.6); stroke-width: 1.8; }
 
-    /* RIGHT PANEL */
     .right-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 60px 80px; }
     .form-container { width: 100%; max-width: 420px; }
 
-    /* TABS */
     .tabs { display: flex; background: rgba(129,131,98,0.1); border-radius: 50px; padding: 4px; margin-bottom: 40px; }
     .tab { flex: 1; padding: 12px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 50px; transition: all .2s; color: var(--muted); border: none; background: transparent; font-family: 'DM Sans', sans-serif; }
     .tab.active { background: var(--white); color: var(--dark); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
-    /* FORM */
     .form-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; margin-bottom: 8px; }
     .form-subtitle { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
     .form { display: flex; flex-direction: column; gap: 18px; }
@@ -62,7 +58,6 @@
     .form-group input::placeholder { color: #bbb; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-    /* Role selector */
     .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .role-option { border: 1.5px solid rgba(129,131,98,0.25); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: all .2s; text-align: center; background: var(--white); }
     .role-option:hover { border-color: var(--sage); background: rgba(129,131,98,0.04); }
@@ -72,13 +67,11 @@
     .role-option .role-name { font-size: 13px; font-weight: 600; }
     .role-option .role-desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
-    /* Error / Success box */
     .error-box { background: #fdecea; color: #c0392b; border: 1px solid #f5c6cb; border-radius: 10px; padding: 11px 15px; font-size: 13px; font-weight: 500; display: none; }
     .error-box.visible { display: block; }
     .success-box { background: #edfaed; color: #27ae60; border: 1px solid #b2dfdb; border-radius: 10px; padding: 11px 15px; font-size: 13px; font-weight: 500; display: none; }
     .success-box.visible { display: block; }
 
-    /* Submit button */
     .btn-submit { background: var(--sage); color: var(--white); padding: 15px; border-radius: var(--radius); font-size: 15px; font-weight: 600; border: none; cursor: pointer; width: 100%; transition: background .2s, transform .15s; box-shadow: 0 6px 20px rgba(129,131,98,0.3); margin-top: 4px; font-family: 'DM Sans', sans-serif; }
     .btn-submit:hover { background: var(--sage-light); transform: translateY(-1px); }
     .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -105,7 +98,6 @@
 </head>
 <body>
 
-<!-- LEFT PANEL -->
 <div class="left-panel">
   <a href="index.html" class="left-logo">
     <div class="left-logo-icon">
@@ -139,23 +131,19 @@
         <div class="left-feature-icon">
           <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4c1.4 0 2.8 1.1 2.8 2.5v.5c.6.3 1.2 1 1.2 2v4c0 1.1-.9 2-2 2H10c-1.1 0-2-.9-2-2v-4c0-1 .6-1.7 1.2-2v-.5C9.2 6.1 10.6 5 12 5z"/></svg>
         </div>
-        Secure accounts 
+        Secure accounts
       </div>
     </div>
   </div>
 </div>
 
-<!-- RIGHT PANEL -->
 <div class="right-panel">
   <div class="form-container">
-
-    <!-- TABS -->
     <div class="tabs">
       <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
       <button class="tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
     </div>
 
-    <!-- LOGIN FORM -->
     <div id="login-form">
       <div class="form-title">Welcome Back </div>
       <div class="form-subtitle">Sign in to your BridgeSign account</div>
@@ -176,7 +164,6 @@
       </div>
     </div>
 
-    <!-- REGISTER FORM -->
     <div id="register-form">
       <div class="form-title">Create account</div>
       <div class="form-subtitle">Join BridgeSign today — it's free</div>
@@ -226,7 +213,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -274,7 +260,6 @@
     else window.location.href = 'deaf_dashboard.html';
   }
 
-  // ── LOGIN ──────────────────────────────────────────────
   async function handleLogin() {
     clearError('login-error');
     const email = document.getElementById('login-email').value.trim();
@@ -299,25 +284,22 @@
         return;
       }
 
-      // Save token and user info
       localStorage.setItem('bs_token', data.access_token);
       localStorage.setItem('bs_user', JSON.stringify(data.user));
 
-      // Get profile to know role
       const profileRes = await fetch(`${API}/profile`, {
         headers: { 'Authorization': `Bearer ${data.access_token}` }
       });
       const profile = await profileRes.json();
       localStorage.setItem('bs_profile', JSON.stringify(profile));
 
-
-
-await fetch(`${API}/activity`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${data.access_token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'login' })
-});
-
+      try {
+        await fetch(`${API}/activity`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${data.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login' })
+        });
+      } catch (e) {}
 
       goToDashboard(profile.role);
 
@@ -328,7 +310,6 @@ await fetch(`${API}/activity`, {
     }
   }
 
-  // ── REGISTER ───────────────────────────────────────────
   async function handleRegister() {
     clearError('register-error');
     const firstName = document.getElementById('reg-firstname').value.trim();
@@ -357,7 +338,6 @@ await fetch(`${API}/activity`, {
         return;
       }
 
-      // Auto login after register
       const loginRes = await fetch(`${API}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -365,7 +345,7 @@ await fetch(`${API}/activity`, {
       });
       const loginData = await loginRes.json();
 
-if (loginData.access_token) {
+      if (loginData.access_token) {
         localStorage.setItem('bs_token', loginData.access_token);
         localStorage.setItem('bs_user', JSON.stringify(loginData.user));
         const profileRes = await fetch(`${API}/profile`, {
@@ -374,16 +354,20 @@ if (loginData.access_token) {
         const profile = await profileRes.json();
         localStorage.setItem('bs_profile', JSON.stringify(profile));
 
-        await fetch(`${API}/account`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${loginData.access_token}` }
-        });
+        try {
+          await fetch(`${API}/account`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${loginData.access_token}` }
+          });
+        } catch (e) {}
 
-        await fetch(`${API}/activity`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${loginData.access_token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'login' })
-        });
+        try {
+          await fetch(`${API}/activity`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${loginData.access_token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'login' })
+          });
+        } catch (e) {}
 
         goToDashboard(selectedRole);
       }
@@ -398,12 +382,10 @@ if (loginData.access_token) {
 
   window.addEventListener('DOMContentLoaded', () => {
     if (window.location.hash === '#register') switchTab('register');
-    // If already logged in, redirect
     const token = localStorage.getItem('bs_token');
     const profile = JSON.parse(localStorage.getItem('bs_profile') || 'null');
     if (token && profile) goToDashboard(profile.role);
   });
-
 </script>
 </body>
 </html>
