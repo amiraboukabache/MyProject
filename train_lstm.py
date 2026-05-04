@@ -49,7 +49,7 @@ y_cat = to_categorical(y_encoded)
 
 X_train, X_test, y_train, y_test = train_test_split(X_aug, y_cat, test_size=0.2, random_state=42)
 
-model = Sequential([
+
     LSTM(128, return_sequences=True, input_shape=(30, 195)),
     Dropout(0.3),
     LSTM(64),

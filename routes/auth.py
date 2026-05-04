@@ -58,7 +58,7 @@ def register():
         headers=db_headers
     )
 
-    if db_res.status_code not in (200, 201):
+    if db_res.status_code not in (200, 201, 204):
         return jsonify({
             "error": "Compte créé mais échec de l'insertion du profil",
             "details": db_res.json()
