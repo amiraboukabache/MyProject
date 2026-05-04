@@ -9,11 +9,7 @@ from config import SUPABASE_URL, SUPABASE_KEY, firestore_db
 messages_bp = Blueprint("messages", __name__)
 
 
-# ─────────────────────────────────────────
-#  HELPER : vérifier le token
-# ─────────────────────────────────────────
 def get_user_from_token(token):
-    """Récupère l'utilisateur depuis le token JWT Supabase"""
     res = requests.get(
         f"{SUPABASE_URL}/auth/v1/user",
         headers={
@@ -32,9 +28,6 @@ def get_token_from_request():
     return auth_header.split(" ")[1]
 
 
-# ─────────────────────────────────────────
-#  ENVOYER un message
-# ─────────────────────────────────────────
 @messages_bp.route("/messages", methods=["POST"])
 def send_message():
     token = get_token_from_request()
@@ -52,7 +45,6 @@ def send_message():
     if missing:
         return jsonify({"error": f"Champs manquants : {', '.join(missing)}"}), 400
 
-    # type peut être : "text", "voice", "sign"
     allowed_types = ["text", "voice", "sign"]
     if data["type"] not in allowed_types:
         return jsonify({"error": f"Type invalide. Choisir parmi : {allowed_types}"}), 400
@@ -71,7 +63,6 @@ def send_message():
         "date": datetime.now(timezone.utc).isoformat()
     }
 
-    # Sauvegarder dans Firestore
     firestore_db.collection("Messages").document(message_id).set(message_data)
 
     return jsonify({
@@ -80,9 +71,6 @@ def send_message():
     }), 201
 
 
-# ─────────────────────────────────────────
-#  VOIR les messages d'une conversation
-# ─────────────────────────────────────────
 @messages_bp.route("/messages/<other_user_id>", methods=["GET"])
 def get_messages(other_user_id):
     token = get_token_from_request()
@@ -95,13 +83,11 @@ def get_messages(other_user_id):
 
     sender_id = user.get("id")
 
-    # Récupérer les messages envoyés par moi à l'autre
     sent = firestore_db.collection("Messages")\
         .where("sender_id", "==", sender_id)\
         .where("receiver_id", "==", other_user_id)\
         .stream()
 
-    # Récupérer les messages reçus de l'autre
     received = firestore_db.collection("Messages")\
         .where("sender_id", "==", other_user_id)\
         .where("receiver_id", "==", sender_id)\
@@ -113,15 +99,11 @@ def get_messages(other_user_id):
     for msg in received:
         messages.append(msg.to_dict())
 
-    # Trier par date
     messages.sort(key=lambda x: x.get("date", ""))
 
     return jsonify(messages), 200
 
 
-# ─────────────────────────────────────────
-#  SUPPRIMER un message
-# ─────────────────────────────────────────
 @messages_bp.route("/messages/<message_id>", methods=["DELETE"])
 def delete_message(message_id):
     token = get_token_from_request()
@@ -134,7 +116,6 @@ def delete_message(message_id):
 
     sender_id = user.get("id")
 
-    # Vérifier que le message appartient à l'utilisateur
     doc = firestore_db.collection("Messages").document(message_id).get()
 
     if not doc.exists:
@@ -149,52 +130,7 @@ def delete_message(message_id):
     return jsonify({"message": "Message supprimé avec succès"}), 200
 
 
-# ─────────────────────────────────────────
-#  VOIR l'historique (toutes les conversations)
-# ─────────────────────────────────────────
 history_cache = {}
-
-@messages_bp.route("/messages/history", methods=["GET"])
-def get_history():
-    token = get_token_from_request()
-    if not token:
-        return jsonify({"error": "Token manquant"}), 401
-
-    user = get_user_from_token(token)
-    if not user:
-        return jsonify({"error": "Token invalide"}), 401
-
-    user_id = user.get("id")
-
-    cache_key = user_id
-    now = time.time()
-    if cache_key in history_cache:
-        cached_data, cached_time = history_cache[cache_key]
-        if now - cached_time < 30:
-            return jsonify(cached_data), 200
-
-    sent = firestore_db.collection("Messages")\
-        .where("sender_id", "==", user_id)\
-        .stream()
-
-    received = firestore_db.collection("Messages")\
-        .where("receiver_id", "==", user_id)\
-        .stream()
-
-    messages = []
-    for msg in sent:
-        messages.append(msg.to_dict())
-    for msg in received:
-        messages.append(msg.to_dict())
-
-    messages.sort(key=lambda x: x.get("date", ""))
-
-    history_cache[cache_key] = (messages, now)
-
-    if not messages:
-        return jsonify({"message": "Aucun historique disponible"}), 200
-
-    return jsonify(messages), 200history_cache = {}
 
 @messages_bp.route("/messages/history", methods=["GET"])
 def get_history():
