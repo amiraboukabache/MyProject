@@ -284,7 +284,7 @@
   // API        = Railway  → users, messages
   // PREDICT_API = ngrok   → predict_server.py local (prediction seulement)
    const API = 'https://myproject-production-c78f.up.railway.app'; // URL RAILWAY 
-   const PREDICT_API = 'https://country-carbon-denatured.ngrok-free.dev';// URL ngrok (changer à chaque session)
+   const PREDICT_API = 'https://country-carbon-denatured.ngrok-free.dev';;// URL ngrok (changer à chaque session)
 
   const token = localStorage.getItem('bs_token');
   const profile = JSON.parse(localStorage.getItem('bs_profile') || 'null');
@@ -605,7 +605,7 @@
 
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(pollMessages, 4000);
+    pollTimer = setInterval(pollMessages, 15000);
   }
 
   loadUsers();
