@@ -5,6 +5,7 @@ import uuid
 import time
 from datetime import datetime, timezone
 from config import SUPABASE_URL, SUPABASE_KEY, firestore_db
+from routes.activity import log_activity_internal
 
 messages_bp = Blueprint("messages", __name__)
 
@@ -50,7 +51,7 @@ def send_message():
         return jsonify({"error": f"Type invalide. Choisir parmi : {allowed_types}"}), 400
 
     message_id = str(uuid.uuid4())
-    sender_id  = user.get("id")
+    sender_id = user.get("id")
 
     message_data = {
         "message_id": message_id,
@@ -60,11 +61,12 @@ def send_message():
         "type": data["type"],
         "media_url": data.get("media_url", None),
         "status": "sent",
-        "date": datetime.now(timezone.utc).isoformat()
+        "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
     }
 
     try:
         firestore_db.collection("Messages").document(message_id).set(message_data)
+        log_activity_internal(sender_id, "send_message")
     except Exception as e:
         return jsonify({"error": "Erreur lors de l'envoi du message", "details": str(e)}), 503
 
@@ -74,7 +76,6 @@ def send_message():
     }), 201
 
 
-# Cache for get_messages (per conversation pair)
 conversation_cache = {}
 
 @messages_bp.route("/messages/<other_user_id>", methods=["GET"])
@@ -89,7 +90,6 @@ def get_messages(other_user_id):
 
     sender_id = user.get("id")
 
-    # Cache per conversation pair for 15 seconds
     cache_key = f"{sender_id}_{other_user_id}"
     now = time.time()
     if cache_key in conversation_cache:
@@ -115,18 +115,18 @@ def get_messages(other_user_id):
             messages.append(msg.to_dict())
 
         messages.sort(key=lambda x: x.get("date", ""))
-
         conversation_cache[cache_key] = (messages, now)
 
         return jsonify(messages), 200
 
     except Exception as e:
-        # Return cached data if available, even if stale
         if cache_key in conversation_cache:
             cached_data, _ = conversation_cache[cache_key]
             return jsonify(cached_data), 200
         return jsonify({"error": "Service temporairement indisponible. Réessayez dans quelques instants."}), 503
 
+
+history_cache = {}
 
 @messages_bp.route("/messages/<message_id>", methods=["DELETE"])
 def delete_message(message_id):
@@ -152,7 +152,6 @@ def delete_message(message_id):
 
         firestore_db.collection("Messages").document(message_id).delete()
 
-        # Invalidate all caches that might contain this message
         keys_to_delete = [k for k in conversation_cache if sender_id in k]
         for k in keys_to_delete:
             del conversation_cache[k]
@@ -166,8 +165,6 @@ def delete_message(message_id):
 
     return jsonify({"message": "Message supprimé avec succès"}), 200
 
-
-history_cache = {}
 
 @messages_bp.route("/messages/history", methods=["GET"])
 def get_history():
@@ -204,7 +201,6 @@ def get_history():
             messages.append(msg.to_dict())
 
         messages.sort(key=lambda x: x.get("date", ""))
-
         history_cache[cache_key] = (messages, now)
 
         if not messages:
@@ -213,7 +209,6 @@ def get_history():
         return jsonify(messages), 200
 
     except Exception as e:
-        # Return stale cache instead of crashing with 500
         if cache_key in history_cache:
             cached_data, _ = history_cache[cache_key]
             return jsonify(cached_data), 200

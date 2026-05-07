@@ -31,6 +31,22 @@ def get_current_user(token):
 
 
 # ─────────────────────────────────────────
+# ✅ HELPER INTERNE — appelé depuis d'autres routes
+# ─────────────────────────────────────────
+def log_activity_internal(user_id, action):
+    try:
+        activity_id = str(uuid.uuid4())
+        firestore_db.collection("UserActivity").document(activity_id).set({
+            "activity_id": activity_id,
+            "user_id": user_id,
+            "action": action,
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        })
+    except Exception as e:
+        print(f"❌ log_activity_internal ERREUR: {e}")
+
+
+# ─────────────────────────────────────────
 # ➕ ENREGISTRER une activité
 # ─────────────────────────────────────────
 @activity_bp.route("/activity", methods=["POST"])
@@ -48,21 +64,11 @@ def save_activity():
     if not data.get("action"):
         return jsonify({"error": "Champ manquant : action"}), 400
 
-    activity_id = str(uuid.uuid4())
     user_id = user.get("id")
-
-    activity_data = {
-        "activity_id": activity_id,
-        "user_id": user_id,
-        "action": data["action"],
-        "date": datetime.now(timezone.utc).isoformat()
-    }
-
-    firestore_db.collection("UserActivity").document(activity_id).set(activity_data)
+    log_activity_internal(user_id, data["action"])
 
     return jsonify({
-        "message": "Activité enregistrée avec succès",
-        "data": activity_data
+        "message": "Activité enregistrée avec succès"
     }), 201
 
 
@@ -85,8 +91,23 @@ def get_activities():
         .where("user_id", "==", user_id)\
         .stream()
 
-    activities = [doc.to_dict() for doc in docs]
-    activities.sort(key=lambda x: x.get("date", ""))
+    activities = []
+    for doc in docs:
+        d = doc.to_dict()
+        date_val = d.get("date")
+        if hasattr(date_val, "ToDatetime"):
+            d["date"] = date_val.ToDatetime(tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        elif hasattr(date_val, "strftime"):
+            if date_val.tzinfo is None:
+                date_val = date_val.replace(tzinfo=timezone.utc)
+            d["date"] = date_val.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        elif isinstance(date_val, str):
+            d["date"] = date_val
+        else:
+            d["date"] = ""
+        activities.append(d)
+
+    activities.sort(key=lambda x: x.get("date") or "", reverse=True)
 
     if not activities:
         return jsonify({"message": "Aucune activité trouvée"}), 200
@@ -107,7 +128,6 @@ def get_all_activities():
     if not user:
         return jsonify({"error": "Token invalide"}), 401
 
-    # Vérifier si admin
     from config import db_headers
     user_id = user.get("id")
     profile_res = requests.get(
@@ -119,7 +139,22 @@ def get_all_activities():
         return jsonify({"error": "Accès refusé — admin seulement"}), 403
 
     docs = firestore_db.collection("UserActivity").stream()
-    activities = [doc.to_dict() for doc in docs]
-    activities.sort(key=lambda x: x.get("date", ""))
+    activities = []
+    for doc in docs:
+        d = doc.to_dict()
+        date_val = d.get("date")
+        if hasattr(date_val, "ToDatetime"):
+            d["date"] = date_val.ToDatetime(tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        elif hasattr(date_val, "strftime"):
+            if date_val.tzinfo is None:
+                date_val = date_val.replace(tzinfo=timezone.utc)
+            d["date"] = date_val.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        elif isinstance(date_val, str):
+            d["date"] = date_val
+        else:
+            d["date"] = ""
+        activities.append(d)
+
+    activities.sort(key=lambda x: x.get("date") or "", reverse=True)
 
     return jsonify(activities), 200
