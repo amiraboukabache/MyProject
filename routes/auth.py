@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import requests
+from datetime import datetime
 from config import SUPABASE_URL, SUPABASE_KEY, db_headers, auth_headers, firestore_db
 
 auth_bp = Blueprint("auth", __name__)
@@ -9,7 +10,7 @@ def log_activity(user_id, action):
     firestore_db.collection("UserActivity").add({
         "user_id": user_id,
         "action": action,
-        "date": __import__("datetime").datetime.utcnow().isoformat() + "+00:00"
+        "date": datetime.utcnow().isoformat() + "+00:00"
     })
 
 
@@ -38,8 +39,13 @@ def register():
 
     db_res = requests.post(
         f"{SUPABASE_URL}/rest/v1/users",
-        json={"user_id": user_id, "name": data["name"], "lastname": data["lastname"],
-              "email": data["email"], "role": data["role"]},
+        json={
+            "user_id": user_id,
+            "name": data["name"],
+            "lastname": data["lastname"],
+            "email": data["email"],
+            "role": data["role"]
+        },
         headers=db_headers
     )
 
@@ -49,7 +55,11 @@ def register():
     # ✅ Log registration activity
     log_activity(user_id, "create_account")
 
-    return jsonify({"message": "Utilisateur créé avec succès", "user_id": user_id, "profile": db_res.json()}), 201
+    return jsonify({
+        "message": "Utilisateur créé avec succès",
+        "user_id": user_id,
+        "profile": db_res.json()
+    }), 201
 
 
 @auth_bp.route("/login", methods=["POST"])
