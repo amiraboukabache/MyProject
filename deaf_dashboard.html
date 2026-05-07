@@ -164,6 +164,34 @@
       .cam-view { height: 110px; }
       .btn-cam { font-size: 12px; padding: 9px; }
     }
+    
+.typing-indicator {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(107,30,46,0.06);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--burg);
+  font-weight: 500;
+  width: fit-content;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.typing-indicator.visible { display: flex; }
+.typing-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--burg); opacity: 0.4;
+  animation: typing-bounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+  40% { transform: scale(1.2); opacity: 1; }
+}
+
   </style>
 </head>
 <body>
@@ -251,6 +279,12 @@
         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
         <h3>Start a Conversation</h3>
         <p>Select a hearing user from the list to start communicating using sign language.</p>
+        <div class="typing-indicator" id="typing-indicator">
+  <div class="typing-dot"></div>
+  <div class="typing-dot"></div>
+  <div class="typing-dot"></div>
+  <span id="typing-text">Sarah is typing...</span>
+</div>
       </div>
     </div>
 
@@ -367,6 +401,7 @@
   }
 
   function selectUser(userId, userName, el) {
+   stopTypingPoll();
     currentReceiverId = userId;
     currentReceiverName = userName;
     document.querySelectorAll('.user-item').forEach(i => i.classList.remove('active'));
@@ -380,6 +415,7 @@
     lastMessageCount = 0;
     loadConversation(userId);
     startPolling();
+    startTypingPoll(); 
   }
 
   // ── Conversation ──
@@ -613,6 +649,56 @@
   loadUsers();
   requestNotifPermission();
   startPolling();
+  let typingPollTimer = null;
+ 
+// تحقق من status السامع كل 2 ثانية
+function startTypingPoll() {
+  if (typingPollTimer) clearInterval(typingPollTimer);
+  typingPollTimer = setInterval(checkTypingStatus, 2000);
+}
+ 
+function stopTypingPoll() {
+  if (typingPollTimer) clearInterval(typingPollTimer);
+  typingPollTimer = null;
+  hideTypingIndicator();
+}
+ 
+async function checkTypingStatus() {
+  if (!currentReceiverId) return;
+  try {
+    const res = await fetch(`${API}/status/typing/${currentReceiverId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+ 
+    if (data.action === 'typing') {
+      showTypingIndicator(`${currentReceiverName} is typing`);
+    } else if (data.action === 'recording') {
+      showTypingIndicator(`${currentReceiverName} is recording voice`);
+    } else {
+      hideTypingIndicator();
+    }
+  } catch (e) {
+    hideTypingIndicator();
+  }
+}
+ 
+function showTypingIndicator(text) {
+  const indicator = document.getElementById('typing-indicator');
+  const typingText = document.getElementById('typing-text');
+  if (indicator && typingText) {
+    typingText.textContent = text;
+    indicator.classList.add('visible');
+    // Scroll to bottom to show indicator
+    const container = document.getElementById('chat-messages');
+    container.scrollTop = container.scrollHeight;
+  }
+}
+ 
+function hideTypingIndicator() {
+  const indicator = document.getElementById('typing-indicator');
+  if (indicator) indicator.classList.remove('visible');
+}
 </script>
 </body>
 </html>

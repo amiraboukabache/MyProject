@@ -164,6 +164,42 @@
       .imt { padding: 7px 10px; font-size: 11px; }
       .chat-input-area { padding: 8px 12px; }
     }
+    .typing-indicator {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(107,122,94,0.08);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--sage);
+  font-weight: 500;
+  width: fit-content;
+  margin-bottom: 4px;
+}
+.typing-indicator.visible { display: flex; }
+.typing-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--sage); opacity: 0.4;
+  animation: typing-bounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+  40% { transform: scale(1.2); opacity: 1; }
+}
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: #4CAF50; font-weight: 500;
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4CAF50; animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+}
   </style>
 </head>
 <body>
@@ -251,6 +287,12 @@
         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
         <h3>Start a Conversation</h3>
         <p>Select a deaf user from the list to start communicating using voice or text.</p>
+        <div class="typing-indicator" id="typing-indicator">
+  <div class="typing-dot"></div>
+  <div class="typing-dot"></div>
+  <div class="typing-dot"></div>
+  <span id="typing-text">typing...</span>
+</div>
       </div>
     </div>
 
@@ -279,7 +321,10 @@
       </div>
       <div class="input-panel" id="panel-text">
         <div class="text-row">
-          <textarea class="msg-textarea" id="text-input" placeholder="Type your message..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <textarea class="msg-textarea" id="text-input" placeholder="Type your message..." onkeydown="handleKey(event)" oninput="autoResize(this)"  oninput="handleTextInput(this)" 
+              onblur="sendTypingStatus('idle')"
+              onkeydown="handleKey(event)">
+          </textarea>
           <button class="btn-send" onclick="sendTextMsg()">
             <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
@@ -388,6 +433,7 @@
     const btn = document.getElementById('voice-btn');
     const status = document.getElementById('voice-status');
     if (!isRecording) {
+       sendTypingStatus('recording');
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('Use Chrome for voice recognition.'); return; }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SR();
@@ -411,10 +457,11 @@
       recognition.start();
       isRecording = true; btn.textContent = 'Stop Recording'; btn.style.background = '#8a2535';
       status.textContent = 'Listening...';
-    } else cancelVoice();
+    } else sendTypingStatus('idle');   cancelVoice();
   }
 
   function cancelVoice() {
+    sendTypingStatus('idle'); 
     if (recognition) { recognition.stop(); recognition = null; }
     isRecording = false;
     const btn = document.getElementById('voice-btn');
@@ -573,6 +620,30 @@
   loadUsers();
   requestNotifPermission();
   startPolling();
+  async function sendTypingStatus(action) {
+  if (!currentReceiverId) return;
+  try {
+    await fetch(`${API}/status/typing`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        receiver_id: currentReceiverId,
+        action: action  // "typing" | "recording" | "idle"
+      })
+    });
+  } catch (e) {}
+}
+let typingTimer = null;
+function handleTextInput(el) {
+  autoResize(el);
+  sendTypingStatus('typing');
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => sendTypingStatus('idle'), 3000);
+}
+ 
 </script>
 </body>
 </html>
