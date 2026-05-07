@@ -438,13 +438,31 @@
       const sorted = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
 
 const makeLog = (a) => {
-  const d = new Date(a.date);
-  // FIX: use UTC-aware formatting so time isn't shifted by timezone
-  const timeStr = isNaN(d.getTime()) ? 'Unknown time' : d.toLocaleString('en-GB', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    timeZone: 'Africa/Algiers'  // UTC+1, your local time
-  });
+  let timeStr = 'Unknown time';
+  if (a.date) {
+    // Handle both "2026-05-07T19:01:50+00:00" and "2026-05-07T19:01:50.123456+00:00"
+    const d = new Date(a.date.replace(' ', 'T'));
+    if (!isNaN(d.getTime())) {
+      timeStr = d.toLocaleString('en-GB', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        timeZone: 'Africa/Algiers'
+      });
+    }
+  }
+  const dotClass = a.action === 'login'          ? 'log-info'
+                 : a.action === 'create_account' ? 'log-warn'
+                 : a.action === 'send_message'   ? 'log-info'
+                 : a.action === 'logout'         ? 'log-error'
+                 : 'log-info';
+  return `
+    <div class="log-item">
+      <div class="log-dot ${dotClass}"></div>
+      <div class="log-text">${a.action} — User ${a.user_id?.slice(0,8)}...</div>
+      <div class="log-time">${timeStr}</div>
+    </div>
+  `;
+};
 
       const overviewEl = document.getElementById('activity-logs');
       overviewEl.innerHTML = sorted.length
