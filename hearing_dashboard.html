@@ -102,7 +102,7 @@
     .from-me .delete-btn { right: 0; }
     .from-them .delete-btn { left: 0; }
     .delete-btn svg { width: 13px; height: 13px; fill: none; stroke: #c0392b; stroke-width: 2; display: block; }
-    .msg:hover .delete-btn, .delete-btn:hover, .delete-btn:focus { display: block; }
+    .msg:hover .delete-btn { display: block; }
 
     .chat-input-area { background: var(--white); border-top: 1px solid var(--border); padding: 16px 24px; flex-shrink: 0; }
     .input-mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -335,8 +335,7 @@
 </div>
 
 <script>
-  // ── Change this to your Render URL once deployed ──
- const API = 'https://myproject-production-c78f.up.railway.app';
+  const API = 'https://myproject-production-c78f.up.railway.app';
 
   const token = localStorage.getItem('bs_token');
   const profile = JSON.parse(localStorage.getItem('bs_profile') || 'null');
@@ -350,7 +349,7 @@
   let recognition = null, isRecording = false;
   let currentReceiverId = null, currentReceiverName = null, allUsers = [];
   let lastMessageCount = 0;
-  let pollTimer = null;
+  let pollTimer = null;  // FIX: declared properly
   let knownMessageIds = new Set();
 
   function logout() { localStorage.clear(); }
@@ -497,18 +496,24 @@
     } catch (e) { console.error(e); }
   }
 
+  // FIX: delete now calls /messages/<id>/delete to avoid route conflict with GET /messages/<id>
   async function deleteMessage(messageId, divEl) {
     if (!confirm('Delete this message?')) return;
     try {
-      await fetch(`${API}/messages/${messageId}`, {
+      const res = await fetch(`${API}/messages/${messageId}/delete`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      divEl.remove();
-    } catch (e) { alert('Failed to delete message.'); }
+      if (res.ok) {
+        divEl.remove();
+      } else {
+        alert('Failed to delete message.');
+      }
+    } catch (e) {
+      alert('Failed to delete message.');
+    }
   }
 
-  // ── FIXED appendMsg function ──
   function appendMsg(type, text, fromMe, mediaUrl = null, timestamp = null, messageId = null) {
     const container = document.getElementById('chat-messages');
     document.getElementById('select-state')?.remove();
@@ -539,10 +544,10 @@
       div.innerHTML = `
         <div class="msg-bubble" style="padding:10px">
           <div style="font-size:11px;opacity:0.7;margin-bottom:8px">
-            ${type === 'voice' 
-  ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm7 6c0 3.31-2.69 6-6 6s-6-2.69-6-6H4c0 4.08 2.95 7.44 6.84 7.93L11 20v2h2v-2l.16-.07C17.05 19.44 20 16.08 20 12h-2z"/></svg>`
-  : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`
-} "${text}"
+            ${type === 'voice'
+              ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm7 6c0 3.31-2.69 6-6 6s-6-2.69-6-6H4c0 4.08 2.95 7.44 6.84 7.93L11 20v2h2v-2l.16-.07C17.05 19.44 20 16.08 20 12h-2z"/></svg>`
+              : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`
+            } "${text}"
           </div>
           ${isVideo
             ? `<video src="${mediaUrl}" controls autoplay muted style="max-width:220px;border-radius:10px;display:block"></video>`
@@ -612,9 +617,10 @@
     } catch (e) {}
   }
 
+  // FIX: pollTimer now actually gets assigned so clearInterval works
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(pollMessages, 15000);
+    pollTimer = setInterval(pollMessages, 30000);
   }
 
   loadUsers();

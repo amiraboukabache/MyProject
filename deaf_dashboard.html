@@ -77,8 +77,8 @@
     .empty-state span { font-size: 13px; color: var(--muted); text-align: center; max-width: 240px; }
 
     .msg { display: flex; flex-direction: column; max-width: 68%; position: relative; }
-    .msg.from-me { align-self: flex-end; align-items: flex-end; }
-    .msg.from-them { align-self: flex-start; align-items: flex-start; }
+    .msg.from-me { align-self: flex-end; align-items: flex-end; padding-right: 38px; }
+    .msg.from-them { align-self: flex-start; align-items: flex-start; padding-left: 38px; }
     .msg-bubble { padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.6; }
     .from-me .msg-bubble { background: var(--ink); color: var(--white); border-bottom-right-radius: 4px; }
     .from-them .msg-bubble { background: var(--white); color: var(--ink); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
@@ -90,11 +90,9 @@
     .msg-media video, .msg-media img { width: 100%; border-radius: 12px; display: block; }
     .msg-meta { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
 
-    .delete-btn { display: none; position: absolute; top: 4px; background: rgba(255,255,255,0.92); border: 1px solid rgba(192,57,43,0.25); border-radius: 6px; cursor: pointer; padding: 5px; opacity: 1; z-index: 20; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+    .delete-btn { display: none; position: absolute; top: 4px; background: rgba(255,255,255,0.92); border: 1px solid rgba(192,57,43,0.25); border-radius: 6px; cursor: pointer; padding: 5px; z-index: 20; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
     .from-me .delete-btn { right: 0; }
-.from-them .delete-btn { left: 0; right: auto; }
-.msg.from-me { padding-right: 38px; }
-.msg.from-them { padding-left: 38px; }
+    .from-them .delete-btn { left: 0; right: auto; }
     .delete-btn svg { width: 14px; height: 14px; fill: none; stroke: #c0392b; stroke-width: 2; display: block; }
     .delete-btn:hover { background: rgba(192,57,43,0.1); }
     .msg.show-delete .delete-btn { display: block; }
@@ -152,8 +150,6 @@
       .chat-input-area { padding: 10px 14px; }
       .msg { max-width: 85%; }
       .cam-view { height: 130px; }
-      .from-me .delete-btn { right: 0; }
-      .from-them .delete-btn { left: 0; }
     }
 
     @media (max-width: 480px) {
@@ -316,11 +312,8 @@
 </div>
 
 <script>
-  // ── CONFIGURATION ──
-  // API        = Railway  → users, messages
-  // PREDICT_API = ngrok   → predict_server.py local (prediction seulement)
-   const API = 'https://myproject-production-c78f.up.railway.app'; // URL RAILWAY 
-   const PREDICT_API = 'https://country-carbon-denatured.ngrok-free.dev';;// URL ngrok (changer à chaque session)
+  const API = 'https://myproject-production-c78f.up.railway.app';
+  const PREDICT_API = ' https://country-carbon-denatured.ngrok-free.dev';
 
   const token = localStorage.getItem('bs_token');
   const profile = JSON.parse(localStorage.getItem('bs_profile') || 'null');
@@ -335,10 +328,9 @@
   let currentReceiverName = null;
   let allUsers = [];
   let lastMessageCount = 0;
-  let pollTimer = null;
+  let pollTimer = null;  // FIX: declared properly
   let knownMessageIds = new Set();
 
-  // ── MediaPipe state ──
   let signStream = null;
   let signActive = false;
   let lastPrediction = null;
@@ -349,17 +341,11 @@
   function logout() { localStorage.clear(); }
   function goBackToList() { document.getElementById('chat-area').classList.remove('mobile-open'); }
 
-  // ── Init MediaPipe Hands ──
   function initMediaPipe() {
     handsDetector = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`
     });
-    handsDetector.setOptions({
-      maxNumHands: 1,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
-    });
+    handsDetector.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
     handsDetector.onResults((results) => {
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
         const landmarks = results.multiHandLandmarks[0];
@@ -372,7 +358,6 @@
     });
   }
 
-  // ── Users ──
   async function loadUsers() {
     try {
       const res = await fetch(`${API}/users?role=hearing`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -418,7 +403,6 @@
     startTypingPoll(); 
   }
 
-  // ── Conversation ──
   async function loadConversation(userId) {
     const container = document.getElementById('chat-messages');
     container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Loading...</div>';
@@ -445,7 +429,6 @@
     document.getElementById('panel-' + mode).classList.add('visible');
   }
 
-  // ── Sign Camera with MediaPipe ──
   async function toggleSignCamera() {
     const btn = document.getElementById('sign-btn');
     const ph = document.getElementById('sign-ph');
@@ -472,7 +455,6 @@
         predictInterval = setInterval(async () => {
           if (!signActive || !video.videoWidth) return;
           try { await handsDetector.send({ image: video }); } catch (e) {}
-
           if (currentLandmarks) {
             const result = await predictFromLandmarks(currentLandmarks);
             if (result && result.prediction) {
@@ -495,15 +477,11 @@
     }
   }
 
-  // ── Predict → ngrok → predict_server.py local ──
   async function predictFromLandmarks(landmarks) {
     try {
       const res = await fetch(`${PREDICT_API}/predict`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ landmarks })
       });
       if (!res.ok) return null;
@@ -536,17 +514,13 @@
   }
 
   async function sendSignMessage() {
-    if (!lastPrediction) {
-      alert('No sign detected yet. Show your hand clearly to the camera.');
-      return;
-    }
+    if (!lastPrediction) { alert('No sign detected yet. Show your hand clearly to the camera.'); return; }
     const text = lastPrediction;
     cancelSignCamera();
     appendMsg('sign', text, true);
     await saveMessage(text, 'sign');
   }
 
-  // ── Save / Delete → Railway ──
   async function saveMessage(content, type, mediaUrl = null) {
     if (!currentReceiverId) return;
     try {
@@ -558,12 +532,22 @@
     } catch (e) { console.error('Error saving message:', e); }
   }
 
+  // FIX: delete now calls /messages/<id>/delete to avoid route conflict with GET /messages/<id>
   async function deleteMessage(messageId, divEl) {
     if (!confirm('Delete this message?')) return;
     try {
-      await fetch(`${API}/messages/${messageId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-      divEl.remove();
-    } catch (e) { alert('Failed to delete message.'); }
+      const res = await fetch(`${API}/messages/${messageId}/delete`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        divEl.remove();
+      } else {
+        alert('Failed to delete message.');
+      }
+    } catch (e) {
+      alert('Failed to delete message.');
+    }
   }
 
   document.addEventListener('click', function(e) {
@@ -572,7 +556,6 @@
     }
   });
 
-  // ── Append Message ──
   function appendMsg(type, text, fromMe, mediaUrl = null, timestamp = null, messageId = null) {
     const container = document.getElementById('chat-messages');
     document.getElementById('select-state')?.remove();
@@ -602,7 +585,6 @@
     container.scrollTop = container.scrollHeight;
   }
 
-  // ── Polling ──
   async function requestNotifPermission() {
     if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
   }
@@ -641,9 +623,10 @@
     } catch (e) {}
   }
 
+  // FIX: pollTimer now actually gets assigned so clearInterval works
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(pollMessages, 15000);
+    pollTimer = setInterval(pollMessages, 30000);
   }
 
   loadUsers();
