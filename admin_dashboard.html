@@ -429,40 +429,71 @@
     } catch (e) { alert('Error deleting mapping.'); }
   }
 
+  // ── PARSE DATE (FIX) ──────────────────────────────────────
+  // Robustly parses date strings from the API regardless of whether
+  // they include a timezone offset or not.
+  // If no offset is present, the string is treated as UTC (appending 'Z')
+  // to avoid the browser misreading it as local time.
+  function parseDate(dateStr) {
+    if (!dateStr) return null;
+    // Normalize: replace space separator with 'T' (handles "2026-05-03 17:56:36+00:00")
+    let normalized = dateStr.trim().replace(' ', 'T');
+    // If no timezone info present (no +, no Z after the time part), treat as UTC
+    const hasOffset = /[Zz]$|[+-]\d{2}:\d{2}$/.test(normalized);
+    if (!hasOffset) {
+      normalized += 'Z';
+    }
+    const d = new Date(normalized);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // ── FORMAT DATE for display (Algeria = UTC+1) ─────────────
+  function formatDate(dateStr) {
+    const d = parseDate(dateStr);
+    if (!d) return 'Unknown time';
+    return d.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZone: 'Africa/Algiers'
+    });
+  }
+
   // ── LOAD ACTIVITY ─────────────────────────────────────────
   async function loadActivity() {
     try {
       const res = await fetch(`${API}/admin/activity`, { headers: { 'Authorization': `Bearer ${token}` } });
       const activities = await res.json();
 
-      const sorted = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-const makeLog = (a) => {
-  let timeStr = 'Unknown time';
-  if (a.date) {
-    // Handle both "2026-05-07T19:01:50+00:00" and "2026-05-07T19:01:50.123456+00:00"
-    const d = new Date(a.date.replace(' ', 'T'));
-    if (!isNaN(d.getTime())) {
-      timeStr = d.toLocaleString('en-GB', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-        timeZone: 'Africa/Algiers'
+      // Sort descending by parsed date (most recent first)
+      const sorted = [...activities].sort((a, b) => {
+        const da = parseDate(a.date);
+        const db = parseDate(b.date);
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return db - da;
       });
-    }
-  }
-  const dotClass = a.action === 'login'          ? 'log-info'
-                 : a.action === 'create_account' ? 'log-warn'
-                 : a.action === 'send_message'   ? 'log-info'
-                 : a.action === 'logout'         ? 'log-error'
-                 : 'log-info';
-  return `
-    <div class="log-item">
-      <div class="log-dot ${dotClass}"></div>
-      <div class="log-text">${a.action} — User ${a.user_id?.slice(0,8)}...</div>
-      <div class="log-time">${timeStr}</div>
-    </div>
-  `;
-};
+
+      const makeLog = (a) => {
+        const timeStr = formatDate(a.date);
+        const dotClass = a.action === 'login'          ? 'log-info'
+                       : a.action === 'create_account' ? 'log-warn'
+                       : a.action === 'send_message'   ? 'log-info'
+                       : a.action === 'logout'         ? 'log-error'
+                       : 'log-info';
+        return `
+          <div class="log-item">
+            <div class="log-dot ${dotClass}"></div>
+            <div class="log-text">${a.action} — User ${a.user_id?.slice(0,8)}...</div>
+            <div class="log-time">${timeStr}</div>
+          </div>
+        `;
+      };
 
       const overviewEl = document.getElementById('activity-logs');
       overviewEl.innerHTML = sorted.length
