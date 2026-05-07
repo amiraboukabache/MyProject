@@ -14,8 +14,6 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--dark); display: flex; min-height: 100vh; }
-
-    /* SIDEBAR */
     .sidebar { width: 240px; background: var(--dark); display: flex; flex-direction: column; padding: 28px 20px; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
     .sidebar-logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 40px; }
     .sidebar-logo span { color: var(--rose); }
@@ -33,23 +31,15 @@
     .user-avatar-sm svg { width: 18px; height: 18px; fill: none; stroke: white; stroke-width: 2; }
     .user-info-sm .user-name { font-size: 13px; font-weight: 600; color: var(--white); }
     .user-info-sm .user-role { font-size: 11px; color: rgba(255,255,255,0.4); }
-
-    /* MAIN */
     .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
-
-    /* TOPBAR */
     .topbar { background: var(--white); padding: 18px 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(129,131,98,0.12); position: sticky; top: 0; z-index: 40; }
     .topbar-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; }
     .topbar-title span { color: var(--rose); font-style: italic; }
     .logout-btn { padding: 9px 20px; border-radius: 50px; background: rgba(105,20,32,0.08); color: var(--burgundy); border: 1px solid rgba(105,20,32,0.2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; text-decoration: none; }
     .logout-btn:hover { background: var(--burgundy); color: var(--white); }
-
-    /* CONTENT */
     .content { padding: 36px; display: flex; flex-direction: column; gap: 28px; }
     .section { display: none; flex-direction: column; gap: 28px; }
     .section.active { display: flex; }
-
-    /* STATS */
     .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .stat-card { background: var(--white); border-radius: var(--radius); padding: 22px 24px; border: 1px solid rgba(129,131,98,0.12); display: flex; align-items: center; gap: 16px; transition: transform .2s; }
     .stat-card:hover { transform: translateY(-3px); }
@@ -65,16 +55,12 @@
     .stat-card:nth-child(4) .stat-icon svg { stroke: var(--dark); }
     .stat-info .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; line-height: 1; }
     .stat-info .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-    /* CARDS */
     .card { background: var(--white); border-radius: var(--radius); padding: 28px; border: 1px solid rgba(129,131,98,0.12); }
     .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .card-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; }
     .card-badge { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 50px; }
     .badge-sage { background: rgba(129,131,98,0.12); color: var(--sage); }
     .badge-rose { background: rgba(172,142,133,0.15); color: var(--rose); }
-
-    /* TABLE */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid rgba(129,131,98,0.15); }
@@ -85,21 +71,15 @@
     .role-deaf { background: rgba(129,131,98,0.12); color: var(--sage); }
     .role-hearing { background: rgba(105,20,32,0.08); color: var(--burgundy); }
     .role-admin { background: rgba(172,142,133,0.15); color: var(--rose); }
-
-    /* ACTION BUTTONS */
     .action-group { display: flex; gap: 6px; }
     .btn-sm { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all .2s; font-family: 'DM Sans', sans-serif; }
     .btn-del { background: rgba(105,20,32,0.08); color: var(--burgundy); }
     .btn-del:hover { background: var(--burgundy); color: var(--white); }
-
-    /* ADD FORM */
     .add-form { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
     .add-input { flex: 1; min-width: 160px; padding: 11px 14px; border: 1.5px solid rgba(129,131,98,0.25); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--dark); background: var(--cream); outline: none; transition: border-color .2s; }
     .add-input:focus { border-color: var(--sage); }
     .btn-add { padding: 11px 22px; border-radius: var(--radius); background: var(--sage); color: var(--white); font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: background .2s; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
     .btn-add:hover { background: var(--sage-light); }
-
-    /* LOGS */
     .logs-list { display: flex; flex-direction: column; gap: 10px; }
     .log-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 10px; background: var(--cream); }
     .log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -108,16 +88,11 @@
     .log-error { background: var(--burgundy); }
     .log-text { flex: 1; font-size: 13px; color: var(--dark); }
     .log-time { font-size: 11px; color: var(--muted); }
-
-    /* SEARCH */
     .search-bar { display: flex; gap: 12px; margin-bottom: 20px; }
     .search-input { flex: 1; padding: 11px 14px; border: 1.5px solid rgba(129,131,98,0.2); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--dark); background: var(--cream); outline: none; }
     .search-input:focus { border-color: var(--sage); }
     .filter-select { padding: 11px 14px; border: 1.5px solid rgba(129,131,98,0.2); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--dark); background: var(--cream); outline: none; cursor: pointer; }
-
-    /* LOADING */
     .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
-
     @media (max-width: 900px) {
       .sidebar { display: none; }
       .main { margin-left: 0; }
@@ -128,7 +103,6 @@
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
   <a href="index.html" class="sidebar-logo">
     <div class="sidebar-logo-icon">
@@ -172,7 +146,6 @@
   </div>
 </aside>
 
-<!-- MAIN -->
 <div class="main">
   <div class="topbar">
     <div class="topbar-title" id="page-title">Overview — <span>Admin Panel</span></div>
@@ -232,12 +205,8 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="users-tbody">
-              <tr><td colspan="4" class="loading">Loading users...</td></tr>
-            </tbody>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+            <tbody id="users-tbody"><tr><td colspan="4" class="loading">Loading users...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -257,12 +226,8 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr><th>ID</th><th>Text Content</th><th>Content URL</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="mapping-tbody">
-              <tr><td colspan="4" class="loading">Loading mappings...</td></tr>
-            </tbody>
+            <thead><tr><th>ID</th><th>Text Content</th><th>Content URL</th><th>Actions</th></tr></thead>
+            <tbody id="mapping-tbody"><tr><td colspan="4" class="loading">Loading mappings...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -290,12 +255,8 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr><th>Name</th><th>Email</th><th>Role</th></tr>
-            </thead>
-            <tbody id="consult-tbody">
-              <tr><td colspan="3" class="loading">Loading...</td></tr>
-            </tbody>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+            <tbody id="consult-tbody"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -306,12 +267,8 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr><th>ID</th><th>Text Content</th><th>Content URL</th></tr>
-            </thead>
-            <tbody id="consult-mapping-tbody">
-              <tr><td colspan="3" class="loading">Loading...</td></tr>
-            </tbody>
+            <thead><tr><th>ID</th><th>Text Content</th><th>Content URL</th></tr></thead>
+            <tbody id="consult-mapping-tbody"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -325,12 +282,10 @@
   const token = localStorage.getItem('bs_token');
   const profile = JSON.parse(localStorage.getItem('bs_profile') || 'null');
 
-  // Redirect if not logged in or not admin
   if (!token || !profile || profile.role !== 'admin') {
     window.location.href = 'login.html';
   }
 
-  // Set admin name
   document.getElementById('admin-name').textContent = profile?.name || 'Admin';
 
   const titles = {
@@ -475,39 +430,48 @@
   }
 
   // ── LOAD ACTIVITY ─────────────────────────────────────────
- async function loadActivity() {
-  try {
-    const res = await fetch(`${API}/admin/activity`, { headers: { 'Authorization': `Bearer ${token}` } });
-    const activities = await res.json();
+  async function loadActivity() {
+    try {
+      const res = await fetch(`${API}/admin/activity`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const activities = await res.json();
 
-    // Sort newest first (don't mutate original)
-    const sorted = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const sorted = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    const makeLog = (a) => `
-      <div class="log-item">
-        <div class="log-dot log-info"></div>
-        <div class="log-text">${a.action} — User ${a.user_id?.slice(0,8)}...</div>
-        <div class="log-time">${new Date(a.date).toLocaleString()}</div>
-      </div>
-    `;
+      const makeLog = (a) => {
+        const d = new Date(a.date);
+        const timeStr = d.toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+        const dotClass = a.action === 'login'          ? 'log-info'
+                       : a.action === 'create_account' ? 'log-warn'
+                       : a.action === 'send_message'   ? 'log-info'
+                       : a.action === 'logout'         ? 'log-error'
+                       : 'log-info';
+        return `
+          <div class="log-item">
+            <div class="log-dot ${dotClass}"></div>
+            <div class="log-text">${a.action} — User ${a.user_id?.slice(0,8)}...</div>
+            <div class="log-time">${timeStr}</div>
+          </div>
+        `;
+      };
 
-    // Overview: top 5 newest
-    const overviewEl = document.getElementById('activity-logs');
-    overviewEl.innerHTML = sorted.length
-      ? sorted.slice(0, 5).map(makeLog).join('')
-      : '<div class="loading">No activity found.</div>';
+      const overviewEl = document.getElementById('activity-logs');
+      overviewEl.innerHTML = sorted.length
+        ? sorted.slice(0, 5).map(makeLog).join('')
+        : '<div class="loading">No activity found.</div>';
 
-    // Monitor: top 20 newest
-    const monitorEl = document.getElementById('monitor-logs');
-    monitorEl.innerHTML = sorted.length
-      ? sorted.slice(0, 20).map(makeLog).join('')
-      : '<div class="loading">No activity found.</div>';
+      const monitorEl = document.getElementById('monitor-logs');
+      monitorEl.innerHTML = sorted.length
+        ? sorted.slice(0, 20).map(makeLog).join('')
+        : '<div class="loading">No activity found.</div>';
 
-  } catch (e) {
-    document.getElementById('monitor-logs').innerHTML = '<div class="loading">Error loading activity.</div>';
-    document.getElementById('activity-logs').innerHTML = '<div class="loading">Error loading activity.</div>';
+    } catch (e) {
+      document.getElementById('monitor-logs').innerHTML = '<div class="loading">Error loading activity.</div>';
+      document.getElementById('activity-logs').innerHTML = '<div class="loading">Error loading activity.</div>';
+    }
   }
-}
 
   // ── CONSULT ───────────────────────────────────────────────
   async function loadConsultUsers() {
@@ -539,10 +503,11 @@
     } catch (e) {}
   }
 
-  // Load on start
+  // ── INIT ─────────────────────────────────────────────────
   loadUsers();
   loadMapping();
   loadActivity();
+  setInterval(loadActivity, 10000);
 </script>
 </body>
 </html>
