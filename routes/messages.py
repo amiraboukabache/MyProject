@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from firebase_admin import firestore
 import requests
-import uuid 
+import uuid
 import time
 from datetime import datetime, timezone
 from config import SUPABASE_URL, SUPABASE_KEY, firestore_db
@@ -28,11 +28,17 @@ def get_token_from_request():
     return auth_header.split(" ")[1]
 
 def log_activity(user_id, action):
-    firestore_db.collection("UserActivity").add({
-        "user_id": user_id,
-        "action": action,
-        "date": datetime.now(timezone.utc).isoformat()
-    })
+    try:
+        activity_id = str(uuid.uuid4())
+        firestore_db.collection("UserActivity").add({
+            "activity_id": activity_id,
+            "user_id": user_id,
+            "action": action,
+            "date": datetime.now(timezone.utc).isoformat()
+        })
+        print(f"✅ log_activity OK: {action} pour {user_id}")
+    except Exception as e:
+        print(f"❌ log_activity ERREUR: {e}")
 
 
 @messages_bp.route("/messages", methods=["POST"])
@@ -57,7 +63,7 @@ def send_message():
         return jsonify({"error": f"Type invalide. Choisir parmi : {allowed_types}"}), 400
 
     message_id = str(uuid.uuid4())
-    sender_id  = user.get("id")
+    sender_id = user.get("id")
 
     message_data = {
         "message_id": message_id,
@@ -75,7 +81,6 @@ def send_message():
     except Exception as e:
         return jsonify({"error": "Erreur lors de l'envoi du message", "details": str(e)}), 503
 
-    # ✅ Log activity
     log_activity(sender_id, "send_message")
 
     return jsonify({
@@ -84,8 +89,57 @@ def send_message():
     }), 201
 
 
-# Cache for get_messages (per conversation pair)
 conversation_cache = {}
+
+@messages_bp.route("/messages/history", methods=["GET"])
+def get_history():
+    token = get_token_from_request()
+    if not token:
+        return jsonify({"error": "Token manquant"}), 401
+
+    user = get_user_from_token(token)
+    if not user:
+        return jsonify({"error": "Token invalide"}), 401
+
+    user_id = user.get("id")
+
+    cache_key = user_id
+    now = time.time()
+    if cache_key in history_cache:
+        cached_data, cached_time = history_cache[cache_key]
+        if now - cached_time < 30:
+            return jsonify(cached_data), 200
+
+    try:
+        sent = firestore_db.collection("Messages")\
+            .where("sender_id", "==", user_id)\
+            .stream()
+
+        received = firestore_db.collection("Messages")\
+            .where("receiver_id", "==", user_id)\
+            .stream()
+
+        messages = []
+        for msg in sent:
+            messages.append(msg.to_dict())
+        for msg in received:
+            messages.append(msg.to_dict())
+
+        messages.sort(key=lambda x: x.get("date", ""))
+
+        history_cache[cache_key] = (messages, now)
+
+        if not messages:
+            return jsonify({"message": "Aucun historique disponible"}), 200
+
+        return jsonify(messages), 200
+
+    except Exception as e:
+        if cache_key in history_cache:
+            cached_data, _ = history_cache[cache_key]
+            return jsonify(cached_data), 200
+        return jsonify({"error": "Service temporairement indisponible. Réessayez dans quelques instants."}), 503
+
 
 @messages_bp.route("/messages/<other_user_id>", methods=["GET"])
 def get_messages(other_user_id):
@@ -149,81 +203,4 @@ def delete_message(message_id):
     sender_id = user.get("id")
 
     try:
-        doc = firestore_db.collection("Messages").document(message_id).get()
-
-        if not doc.exists:
-            return jsonify({"error": "Message introuvable"}), 404
-
-        msg_data = doc.to_dict()
-        if msg_data.get("sender_id") != sender_id:
-            return jsonify({"error": "Vous ne pouvez pas supprimer ce message"}), 403
-
-        firestore_db.collection("Messages").document(message_id).delete()
-
-        # ✅ Log activity
-        log_activity(sender_id, "delete_message")
-
-        keys_to_delete = [k for k in conversation_cache if sender_id in k]
-        for k in keys_to_delete:
-            del conversation_cache[k]
-
-        keys_to_delete = [k for k in history_cache if k == sender_id]
-        for k in keys_to_delete:
-            del history_cache[k]
-
-    except Exception as e:
-        return jsonify({"error": "Erreur lors de la suppression", "details": str(e)}), 503
-
-    return jsonify({"message": "Message supprimé avec succès"}), 200
-
-
-history_cache = {}
-
-@messages_bp.route("/messages/history", methods=["GET"])
-def get_history():
-    token = get_token_from_request()
-    if not token:
-        return jsonify({"error": "Token manquant"}), 401
-
-    user = get_user_from_token(token)
-    if not user:
-        return jsonify({"error": "Token invalide"}), 401
-
-    user_id = user.get("id")
-
-    cache_key = user_id
-    now = time.time()
-    if cache_key in history_cache:
-        cached_data, cached_time = history_cache[cache_key]
-        if now - cached_time < 30:
-            return jsonify(cached_data), 200
-
-    try:
-        sent = firestore_db.collection("Messages")\
-            .where("sender_id", "==", user_id)\
-            .stream()
-
-        received = firestore_db.collection("Messages")\
-            .where("receiver_id", "==", user_id)\
-            .stream()
-
-        messages = []
-        for msg in sent:
-            messages.append(msg.to_dict())
-        for msg in received:
-            messages.append(msg.to_dict())
-
-        messages.sort(key=lambda x: x.get("date", ""))
-
-        history_cache[cache_key] = (messages, now)
-
-        if not messages:
-            return jsonify({"message": "Aucun historique disponible"}), 200
-
-        return jsonify(messages), 200
-
-    except Exception as e:
-        if cache_key in history_cache:
-            cached_data, _ = history_cache[cache_key]
-            return jsonify(cached_data), 200
-        return jsonify({"error": "Service temporairement indisponible. Réessayez dans quelques instants."}), 503
+        doc = firestore_db.collectio

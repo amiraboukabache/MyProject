@@ -1,17 +1,24 @@
 from flask import Blueprint, request, jsonify
 import requests
-from datetime import datetime
+import uuid
+from datetime import datetime, timezone
 from config import SUPABASE_URL, SUPABASE_KEY, db_headers, auth_headers, firestore_db
 
 auth_bp = Blueprint("auth", __name__)
 
 
 def log_activity(user_id, action):
-    firestore_db.collection("UserActivity").add({
-        "user_id": user_id,
-        "action": action,
-        "date": datetime.utcnow().isoformat() + "+00:00"
-    })
+    try:
+        activity_id = str(uuid.uuid4())
+        firestore_db.collection("UserActivity").add({
+            "activity_id": activity_id,
+            "user_id": user_id,
+            "action": action,
+            "date": datetime.now(timezone.utc).isoformat()
+        })
+        print(f"✅ log_activity OK: {action} pour {user_id}")
+    except Exception as e:
+        print(f"❌ log_activity ERREUR: {e}")
 
 
 @auth_bp.route("/register", methods=["POST"])
@@ -52,7 +59,6 @@ def register():
     if db_res.status_code not in (200, 201, 204):
         return jsonify({"error": "Compte créé mais échec insertion profil", "details": db_res.json()}), 400
 
-    # ✅ Log registration activity
     log_activity(user_id, "create_account")
 
     return jsonify({
@@ -79,7 +85,6 @@ def login():
     if "access_token" not in login_data:
         return jsonify({"error": "Email ou mot de passe incorrect", "details": login_data}), 401
 
-    # ✅ Log login activity
     user_id = login_data.get("user", {}).get("id", "unknown")
     log_activity(user_id, "login")
 
