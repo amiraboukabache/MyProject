@@ -475,31 +475,39 @@
   }
 
   // ── LOAD ACTIVITY ─────────────────────────────────────────
-  async function loadActivity() {
-    try {
-      const res = await fetch(`${API}/admin/activity`, { headers: { 'Authorization': `Bearer ${token}` } });
-      const activities = await res.json();
-      const container = document.getElementById('monitor-logs');
-      if (!activities.length) { container.innerHTML = '<div class="loading">No activity found.</div>'; return; }
-      container.innerHTML = activities.reverse().slice(0, 20).map(a => `
-        <div class="log-item">
-          <div class="log-dot log-info"></div>
-          <div class="log-text">${a.action} — User ${a.user_id?.slice(0,8)}...</div>
-          <div class="log-time">${new Date(a.date).toLocaleString()}</div>
-        </div>
-      `).join('');
-      // Also update overview activity
-      document.getElementById('activity-logs').innerHTML = activities.slice(0, 5).map(a => `
-        <div class="log-item">
-          <div class="log-dot log-info"></div>
-          <div class="log-text">${a.action}</div>
-          <div class="log-time">${new Date(a.date).toLocaleTimeString()}</div>
-        </div>
-      `).join('');
-    } catch (e) {
-      document.getElementById('monitor-logs').innerHTML = '<div class="loading">Error loading activity.</div>';
-    }
+ async function loadActivity() {
+  try {
+    const res = await fetch(`${API}/admin/activity`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const activities = await res.json();
+
+    // Sort newest first (don't mutate original)
+    const sorted = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const makeLog = (a) => `
+      <div class="log-item">
+        <div class="log-dot log-info"></div>
+        <div class="log-text">${a.action} — User ${a.user_id?.slice(0,8)}...</div>
+        <div class="log-time">${new Date(a.date).toLocaleString()}</div>
+      </div>
+    `;
+
+    // Overview: top 5 newest
+    const overviewEl = document.getElementById('activity-logs');
+    overviewEl.innerHTML = sorted.length
+      ? sorted.slice(0, 5).map(makeLog).join('')
+      : '<div class="loading">No activity found.</div>';
+
+    // Monitor: top 20 newest
+    const monitorEl = document.getElementById('monitor-logs');
+    monitorEl.innerHTML = sorted.length
+      ? sorted.slice(0, 20).map(makeLog).join('')
+      : '<div class="loading">No activity found.</div>';
+
+  } catch (e) {
+    document.getElementById('monitor-logs').innerHTML = '<div class="loading">Error loading activity.</div>';
+    document.getElementById('activity-logs').innerHTML = '<div class="loading">Error loading activity.</div>';
   }
+}
 
   // ── CONSULT ───────────────────────────────────────────────
   async function loadConsultUsers() {
