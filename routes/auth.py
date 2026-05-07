@@ -14,7 +14,7 @@ def log_activity(user_id, action):
             "activity_id": activity_id,
             "user_id": user_id,
             "action": action,
-            "date": datetime.now(timezone.utc).isoformat()
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")  
         })
         print(f"✅ log_activity OK: {action} pour {user_id}")
     except Exception as e:

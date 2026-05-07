@@ -43,7 +43,7 @@ def log_activity(user_id, action):
             "activity_id": activity_id,
             "user_id": user_id,
             "action": action,
-            "date": datetime.now(timezone.utc).isoformat()
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")  # ✅ seul changement
         })
         print(f"✅ log_activity OK: {action} pour {user_id}")
     except Exception as e:
@@ -173,10 +173,21 @@ def admin_get_activity():
         for doc in docs:
             d = doc.to_dict()
             d["activity_id"] = doc.id
+
+            # ✅ FIX : convertir la date en string ISO peu importe son type
+            date_val = d.get("date")
+            if date_val is None:
+                d["date"] = None
+            elif hasattr(date_val, "isoformat"):
+                # Timestamp Firestore ou datetime Python → string ISO UTC
+                d["date"] = date_val.isoformat()
+            else:
+                d["date"] = str(date_val)
+
             activities.append(d)
 
-        # Trier en Python pour éviter le problème d'index Firestore
-        activities.sort(key=lambda x: x.get("date", ""), reverse=True)
+        # Tri fiable sur string ISO (format identique garanti maintenant)
+        activities.sort(key=lambda x: x.get("date") or "", reverse=True)
         activities = activities[:50]
 
         return jsonify(activities), 200
