@@ -170,27 +170,37 @@ def admin_get_activity():
     try:
         docs = firestore_db.collection("UserActivity").limit(100).stream()
         activities = []
+
         for doc in docs:
             d = doc.to_dict()
             d["activity_id"] = doc.id
 
-            # ✅ FIX : convertir la date en string ISO peu importe son type
             date_val = d.get("date")
-            if date_val is None:
-                d["date"] = None
-            elif hasattr(date_val, "isoformat"):
-                # Timestamp Firestore ou datetime Python → string ISO UTC
-                d["date"] = date_val.isoformat()
+
+            # Cas 1 : Timestamp Firestore (ancien format)
+            if hasattr(date_val, "ToDatetime"):
+                dt = date_val.ToDatetime(tzinfo=timezone.utc)
+                d["date"] = dt.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
+            # Cas 2 : datetime Python
+            elif hasattr(date_val, "strftime"):
+                if date_val.tzinfo is None:
+                    date_val = date_val.replace(tzinfo=timezone.utc)
+                d["date"] = date_val.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
+            # Cas 3 : string déjà propre
+            elif isinstance(date_val, str):
+                d["date"] = date_val
+
             else:
-                d["date"] = str(date_val)
+                d["date"] = ""
 
             activities.append(d)
 
-        # Tri fiable sur string ISO (format identique garanti maintenant)
+        # Tri fiable — toutes les dates sont maintenant des strings identiques
         activities.sort(key=lambda x: x.get("date") or "", reverse=True)
-        activities = activities[:50]
 
-        return jsonify(activities), 200
+        return jsonify(activities[:50]), 200
 
     except Exception as e:
         print(f"❌ admin_get_activity ERREUR: {e}")
