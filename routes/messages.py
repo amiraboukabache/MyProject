@@ -27,6 +27,13 @@ def get_token_from_request():
         return None
     return auth_header.split(" ")[1]
 
+def log_activity(user_id, action):
+    firestore_db.collection("UserActivity").add({
+        "user_id": user_id,
+        "action": action,
+        "date": datetime.now(timezone.utc).isoformat()
+    })
+
 
 @messages_bp.route("/messages", methods=["POST"])
 def send_message():
@@ -68,6 +75,9 @@ def send_message():
     except Exception as e:
         return jsonify({"error": "Erreur lors de l'envoi du message", "details": str(e)}), 503
 
+    # ✅ Log activity
+    log_activity(sender_id, "send_message")
+
     return jsonify({
         "message": "Message envoyé avec succès",
         "data": message_data
@@ -89,7 +99,6 @@ def get_messages(other_user_id):
 
     sender_id = user.get("id")
 
-    # Cache per conversation pair for 15 seconds
     cache_key = f"{sender_id}_{other_user_id}"
     now = time.time()
     if cache_key in conversation_cache:
@@ -121,7 +130,6 @@ def get_messages(other_user_id):
         return jsonify(messages), 200
 
     except Exception as e:
-        # Return cached data if available, even if stale
         if cache_key in conversation_cache:
             cached_data, _ = conversation_cache[cache_key]
             return jsonify(cached_data), 200
@@ -152,7 +160,9 @@ def delete_message(message_id):
 
         firestore_db.collection("Messages").document(message_id).delete()
 
-        # Invalidate all caches that might contain this message
+        # ✅ Log activity
+        log_activity(sender_id, "delete_message")
+
         keys_to_delete = [k for k in conversation_cache if sender_id in k]
         for k in keys_to_delete:
             del conversation_cache[k]
@@ -213,7 +223,6 @@ def get_history():
         return jsonify(messages), 200
 
     except Exception as e:
-        # Return stale cache instead of crashing with 500
         if cache_key in history_cache:
             cached_data, _ = history_cache[cache_key]
             return jsonify(cached_data), 200
