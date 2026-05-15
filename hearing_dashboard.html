@@ -428,36 +428,58 @@
     if (mode !== 'voice') cancelVoice();
   }
 
-  async function toggleVoice() {
-    const btn = document.getElementById('voice-btn');
-    const status = document.getElementById('voice-status');
-    if (!isRecording) {
-       sendTypingStatus('recording');
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('Use Chrome for voice recognition.'); return; }
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SR();
-      recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = false;
-      recognition.onresult = async (e) => {
-        const text = e.results[0][0].transcript.trim().replace(/[.,!?;]+$/g, '');
-        cancelVoice();
-        try {
-          const mapRes = await fetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`, { headers: { 'Authorization': `Bearer ${token}` } });
-          const mapData = await mapRes.json();
-          const videoUrl = mapData.content_url || null;
-          appendMsg('voice', text, true, videoUrl);
-          await saveMessage(text, 'voice', videoUrl);
-        } catch (err) {
-          console.error('Search error:', err);
-          appendMsg('voice', text, true, null);
-          await saveMessage(text, 'voice', null);
-        }
-      };
-      recognition.onerror = (e) => { console.log('Speech error:', e.error); alert('Mic error: ' + e.error); cancelVoice(); };
-      recognition.start();
-      isRecording = true; btn.textContent = 'Stop Recording'; btn.style.background = '#8a2535';
-      status.textContent = 'Listening...';
-    } else sendTypingStatus('idle');   cancelVoice();
+async function toggleVoice() {
+  const btn = document.getElementById('voice-btn');
+  const status = document.getElementById('voice-status');
+
+  if (!isRecording) {
+    sendTypingStatus('recording');
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Use Chrome for voice recognition.');
+      return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = async (e) => {
+      const text = e.results[0][0].transcript.trim().replace(/[.,!?;]+$/g, '');
+      cancelVoice();
+      try {
+        const mapRes = await fetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const mapData = await mapRes.json();
+        const videoUrl = mapData.content_url || null;
+        appendMsg('voice', text, true, videoUrl);
+        await saveMessage(text, 'voice', videoUrl);
+      } catch (err) {
+        console.error('Search error:', err);
+        appendMsg('voice', text, true, null);
+        await saveMessage(text, 'voice', null);
+      }
+    };
+
+    recognition.onerror = (e) => {
+      console.log('Speech error:', e.error);
+      alert('Mic error: ' + e.error);
+      cancelVoice();
+    };
+
+    recognition.start();
+    isRecording = true;
+    btn.textContent = 'Stop Recording';   // ✅ now actually shows
+    btn.style.background = '#8a2535';
+    status.textContent = 'Listening...';
+
+  } else {
+    // ✅ properly wrapped in braces
+    sendTypingStatus('idle');
+    cancelVoice();
   }
+}
 
   function cancelVoice() {
     sendTypingStatus('idle'); 
