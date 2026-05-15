@@ -77,6 +77,58 @@ def send_message():
 
 
 conversation_cache = {}
+history_cache = {}
+
+
+# IMPORTANT: /messages/history must be defined BEFORE /messages/<message_id>
+@messages_bp.route("/messages/history", methods=["GET"])
+def get_history():
+    token = get_token_from_request()
+    if not token:
+        return jsonify({"error": "Token manquant"}), 401
+
+    user = get_user_from_token(token)
+    if not user:
+        return jsonify({"error": "Token invalide"}), 401
+
+    user_id = user.get("id")
+
+    cache_key = user_id
+    now = time.time()
+    if cache_key in history_cache:
+        cached_data, cached_time = history_cache[cache_key]
+        if now - cached_time < 30:
+            return jsonify(cached_data), 200
+
+    try:
+        sent = firestore_db.collection("Messages")\
+            .where("sender_id", "==", user_id)\
+            .stream()
+
+        received = firestore_db.collection("Messages")\
+            .where("receiver_id", "==", user_id)\
+            .stream()
+
+        messages = []
+        for msg in sent:
+            messages.append(msg.to_dict())
+        for msg in received:
+            messages.append(msg.to_dict())
+
+        messages.sort(key=lambda x: x.get("date", ""))
+        history_cache[cache_key] = (messages, now)
+
+        if not messages:
+            return jsonify({"message": "Aucun historique disponible"}), 200
+
+        return jsonify(messages), 200
+
+    except Exception as e:
+        if cache_key in history_cache:
+            cached_data, _ = history_cache[cache_key]
+            return jsonify(cached_data), 200
+        return jsonify({"error": "Service temporairement indisponible. Réessayez dans quelques instants."}), 503
+
 
 @messages_bp.route("/messages/<other_user_id>", methods=["GET"])
 def get_messages(other_user_id):
@@ -126,9 +178,8 @@ def get_messages(other_user_id):
         return jsonify({"error": "Service temporairement indisponible. Réessayez dans quelques instants."}), 503
 
 
-history_cache = {}
-
-@messages_bp.route("/messages/<message_id>", methods=["DELETE"])
+# FIX: route is now /messages/<message_id>/delete to avoid conflict with GET /messages/<id>
+@messages_bp.route("/messages/<message_id>/delete", methods=["DELETE"])
 def delete_message(message_id):
     token = get_token_from_request()
     if not token:
@@ -164,52 +215,3 @@ def delete_message(message_id):
         return jsonify({"error": "Erreur lors de la suppression", "details": str(e)}), 503
 
     return jsonify({"message": "Message supprimé avec succès"}), 200
-
-
-@messages_bp.route("/messages/history", methods=["GET"])
-def get_history():
-    token = get_token_from_request()
-    if not token:
-        return jsonify({"error": "Token manquant"}), 401
-
-    user = get_user_from_token(token)
-    if not user:
-        return jsonify({"error": "Token invalide"}), 401
-
-    user_id = user.get("id")
-
-    cache_key = user_id
-    now = time.time()
-    if cache_key in history_cache:
-        cached_data, cached_time = history_cache[cache_key]
-        if now - cached_time < 30:
-            return jsonify(cached_data), 200
-
-    try:
-        sent = firestore_db.collection("Messages")\
-            .where("sender_id", "==", user_id)\
-            .stream()
-
-        received = firestore_db.collection("Messages")\
-            .where("receiver_id", "==", user_id)\
-            .stream()
-
-        messages = []
-        for msg in sent:
-            messages.append(msg.to_dict())
-        for msg in received:
-            messages.append(msg.to_dict())
-
-        messages.sort(key=lambda x: x.get("date", ""))
-        history_cache[cache_key] = (messages, now)
-
-        if not messages:
-            return jsonify({"message": "Aucun historique disponible"}), 200
-
-        return jsonify(messages), 200
-
-    except Exception as e:
-        if cache_key in history_cache:
-            cached_data, _ = history_cache[cache_key]
-            return jsonify(cached_data), 200
-        return jsonify({"error": "Service temporairement indisponible. Réessayez dans quelques instants."}), 503
