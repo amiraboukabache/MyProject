@@ -158,3 +158,66 @@ def get_all_activities():
     activities.sort(key=lambda x: x.get("date") or "", reverse=True)
 
     return jsonify(activities), 200
+
+
+# ─────────────────────────────────────────
+# ⌨️ STATUS TYPING — Envoyer un statut de frappe
+# ─────────────────────────────────────────
+@activity_bp.route("/status/typing", methods=["POST"])
+def set_typing_status():
+    token = get_token_from_request()
+    if not token:
+        return jsonify({"error": "Token manquant"}), 401
+
+    user = get_current_user(token)
+    if not user:
+        return jsonify({"error": "Token invalide"}), 401
+
+    data = request.json
+    receiver_id = data.get("receiver_id")
+    action = data.get("action")  # "typing" | "recording" | "idle"
+
+    if not receiver_id or not action:
+        return jsonify({"error": "Champs manquants : receiver_id et action requis"}), 400
+
+    if action not in ("typing", "recording", "idle"):
+        return jsonify({"error": "Action invalide. Valeurs acceptées : typing, recording, idle"}), 400
+
+    sender_id = user.get("id")
+
+    doc_id = f"{sender_id}_{receiver_id}"
+    firestore_db.collection("TypingStatus").document(doc_id).set({
+        "sender_id": sender_id,
+        "receiver_id": receiver_id,
+        "action": action,
+        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    })
+
+    return jsonify({"message": f"Statut '{action}' enregistré"}), 200
+
+
+# ─────────────────────────────────────────
+# 👁️ STATUS TYPING — Lire le statut de l'autre utilisateur
+# ─────────────────────────────────────────
+@activity_bp.route("/status/typing", methods=["GET"])
+def get_typing_status():
+    token = get_token_from_request()
+    if not token:
+        return jsonify({"error": "Token manquant"}), 401
+
+    user = get_current_user(token)
+    if not user:
+        return jsonify({"error": "Token invalide"}), 401
+
+    sender_id = request.args.get("sender_id")
+    if not sender_id:
+        return jsonify({"error": "Paramètre manquant : sender_id"}), 400
+
+    receiver_id = user.get("id")
+    doc_id = f"{sender_id}_{receiver_id}"
+
+    doc = firestore_db.collection("TypingStatus").document(doc_id).get()
+    if not doc.exists:
+        return jsonify({"action": "idle"}), 200
+
+    return jsonify(doc.to_dict()), 200
