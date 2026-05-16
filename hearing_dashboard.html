@@ -164,42 +164,43 @@
       .imt { padding: 7px 10px; font-size: 11px; }
       .chat-input-area { padding: 8px 12px; }
     }
+
     .typing-indicator {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  background: rgba(107,122,94,0.08);
-  border-radius: 20px;
-  font-size: 12px;
-  color: var(--sage);
-  font-weight: 500;
-  width: fit-content;
-  margin-bottom: 4px;
-}
-.typing-indicator.visible { display: flex; }
-.typing-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--sage); opacity: 0.4;
-  animation: typing-bounce 1.2s infinite;
-}
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes typing-bounce {
-  0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
-  40% { transform: scale(1.2); opacity: 1; }
-}
-.status-pill {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; color: #4CAF50; font-weight: 500;
-}
-.status-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #4CAF50; animation: pulse-dot 2s infinite;
-}
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
-}
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(107,122,94,0.08);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--sage);
+      font-weight: 500;
+      width: fit-content;
+      margin-bottom: 4px;
+    }
+    .typing-indicator.visible { display: flex; }
+    .typing-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--sage); opacity: 0.4;
+      animation: typing-bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing-bounce {
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+      40% { transform: scale(1.2); opacity: 1; }
+    }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; color: #4CAF50; font-weight: 500;
+    }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #4CAF50; animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
   </style>
 </head>
 <body>
@@ -287,12 +288,12 @@
         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
         <h3>Start a Conversation</h3>
         <p>Select a deaf user from the list to start communicating using voice or text.</p>
-        <div class="typing-indicator" id="typing-indicator">
-  <div class="typing-dot"></div>
-  <div class="typing-dot"></div>
-  <div class="typing-dot"></div>
-  <span id="typing-text">typing...</span>
-</div>
+      </div>
+      <div class="typing-indicator" id="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <span id="typing-text">typing...</span>
       </div>
     </div>
 
@@ -321,10 +322,14 @@
       </div>
       <div class="input-panel" id="panel-text">
         <div class="text-row">
-          <textarea class="msg-textarea" id="text-input" placeholder="Type your message..." onkeydown="handleKey(event)" oninput="autoResize(this)"  oninput="handleTextInput(this)" 
-              onblur="sendTypingStatus('idle')"
-              onkeydown="handleKey(event)">
-          </textarea>
+          <textarea
+            class="msg-textarea"
+            id="text-input"
+            placeholder="Type your message..."
+            oninput="handleTextInput(this)"
+            onblur="sendTypingStatus('idle')"
+            onkeydown="handleKey(event)"
+          ></textarea>
           <button class="btn-send" onclick="sendTextMsg()">
             <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
@@ -349,8 +354,26 @@
   let recognition = null, isRecording = false;
   let currentReceiverId = null, currentReceiverName = null, allUsers = [];
   let lastMessageCount = 0;
-  let pollTimer = null;  // FIX: declared properly
+  let pollTimer = null;
   let knownMessageIds = new Set();
+  let typingTimer = null;
+
+  // ─── AUTH-AWARE FETCH ───────────────────────────────────────────
+  async function apiFetch(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        ...(options.headers || {})
+      }
+    });
+    if (res.status === 401 || res.status === 403) {
+      localStorage.clear();
+      window.location.href = 'login.html';
+      return null;
+    }
+    return res;
+  }
 
   function logout() { localStorage.clear(); }
 
@@ -358,9 +381,11 @@
     document.getElementById('chat-area').classList.remove('mobile-open');
   }
 
+  // ─── LOAD USERS ─────────────────────────────────────────────────
   async function loadUsers() {
     try {
-      const res = await fetch(`${API}/users?role=deaf`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await apiFetch(`${API}/users?role=deaf`);
+      if (!res) return;
       allUsers = await res.json();
       renderUsers(allUsers);
     } catch (e) {
@@ -401,11 +426,13 @@
     startPolling();
   }
 
+  // ─── LOAD CONVERSATION ──────────────────────────────────────────
   async function loadConversation(userId) {
     const container = document.getElementById('chat-messages');
     container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Loading...</div>';
     try {
-      const res = await fetch(`${API}/messages/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await apiFetch(`${API}/messages/${userId}`);
+      if (!res) return;
       const messages = await res.json();
       container.innerHTML = '';
       if (!Array.isArray(messages) || !messages.length) {
@@ -420,6 +447,7 @@
     }
   }
 
+  // ─── INPUT MODES ────────────────────────────────────────────────
   function setMode(mode, btn) {
     document.querySelectorAll('.imt').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -428,61 +456,60 @@
     if (mode !== 'voice') cancelVoice();
   }
 
-async function toggleVoice() {
-  const btn = document.getElementById('voice-btn');
-  const status = document.getElementById('voice-status');
+  // ─── VOICE — FIXED toggleVoice ──────────────────────────────────
+  async function toggleVoice() {
+    const btn = document.getElementById('voice-btn');
+    const status = document.getElementById('voice-status');
 
-  if (!isRecording) {
-    sendTypingStatus('recording');
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Use Chrome for voice recognition.');
-      return;
-    }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SR();
-    recognition.lang = 'en-US';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onresult = async (e) => {
-      const text = e.results[0][0].transcript.trim().replace(/[.,!?;]+$/g, '');
-      cancelVoice();
-      try {
-        const mapRes = await fetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const mapData = await mapRes.json();
-        const videoUrl = mapData.content_url || null;
-        appendMsg('voice', text, true, videoUrl);
-        await saveMessage(text, 'voice', videoUrl);
-      } catch (err) {
-        console.error('Search error:', err);
-        appendMsg('voice', text, true, null);
-        await saveMessage(text, 'voice', null);
+    if (!isRecording) {
+      sendTypingStatus('recording');
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Use Chrome for voice recognition.');
+        return;
       }
-    };
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SR();
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
 
-    recognition.onerror = (e) => {
-      console.log('Speech error:', e.error);
-      alert('Mic error: ' + e.error);
+      recognition.onresult = async (e) => {
+        const text = e.results[0][0].transcript.trim().replace(/[.,!?;]+$/g, '');
+        cancelVoice();
+        try {
+          const mapRes = await apiFetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`);
+          if (!mapRes) return;
+          const mapData = await mapRes.json();
+          const videoUrl = mapData.content_url || null;
+          appendMsg('voice', text, true, videoUrl);
+          await saveMessage(text, 'voice', videoUrl);
+        } catch (err) {
+          console.error('Search error:', err);
+          appendMsg('voice', text, true, null);
+          await saveMessage(text, 'voice', null);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        console.log('Speech error:', e.error);
+        alert('Mic error: ' + e.error);
+        cancelVoice();
+      };
+
+      recognition.start();
+      isRecording = true;
+      btn.textContent = 'Stop Recording';
+      btn.style.background = '#8a2535';
+      status.textContent = 'Listening...';
+
+    } else {
+      sendTypingStatus('idle');
       cancelVoice();
-    };
-
-    recognition.start();
-    isRecording = true;
-    btn.textContent = 'Stop Recording';   // ✅ now actually shows
-    btn.style.background = '#8a2535';
-    status.textContent = 'Listening...';
-
-  } else {
-    // ✅ properly wrapped in braces
-    sendTypingStatus('idle');
-    cancelVoice();
+    }
   }
-}
 
   function cancelVoice() {
-    sendTypingStatus('idle'); 
+    sendTypingStatus('idle');
     if (recognition) { recognition.stop(); recognition = null; }
     isRecording = false;
     const btn = document.getElementById('voice-btn');
@@ -491,14 +518,16 @@ async function toggleVoice() {
     if (status) status.textContent = 'Press Record to start speaking';
   }
 
+  // ─── TEXT MESSAGE ────────────────────────────────────────────────
   async function sendTextMsg() {
     const ta = document.getElementById('text-input');
     const text = ta.value.trim();
     if (!text || !currentReceiverId) return;
     ta.value = ''; ta.style.height = '48px';
+    sendTypingStatus('idle');
     try {
-      const mapRes = await fetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`, { headers: { 'Authorization': `Bearer ${token}` } });
-      const mapData = await mapRes.json();
+      const mapRes = await apiFetch(`${API}/mappingdata/search?text=${encodeURIComponent(text)}`);
+      const mapData = mapRes ? await mapRes.json() : {};
       appendMsg('text', text, true, mapData.content_url || null);
       await saveMessage(text, 'text', mapData.content_url || null);
     } catch {
@@ -510,23 +539,20 @@ async function toggleVoice() {
   async function saveMessage(content, type, mediaUrl = null) {
     if (!currentReceiverId) return;
     try {
-      await fetch(`${API}/messages`, {
+      await apiFetch(`${API}/messages`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ receiver_id: currentReceiverId, content, type, media_url: mediaUrl })
       });
     } catch (e) { console.error(e); }
   }
 
-  // FIX: delete now calls /messages/<id>/delete to avoid route conflict with GET /messages/<id>
+  // ─── DELETE MESSAGE ──────────────────────────────────────────────
   async function deleteMessage(messageId, divEl) {
     if (!confirm('Delete this message?')) return;
     try {
-      const res = await fetch(`${API}/messages/${messageId}/delete`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
+      const res = await apiFetch(`${API}/messages/${messageId}/delete`, { method: 'DELETE' });
+      if (res && res.ok) {
         divEl.remove();
       } else {
         alert('Failed to delete message.');
@@ -536,6 +562,7 @@ async function toggleVoice() {
     }
   }
 
+  // ─── APPEND MESSAGE ──────────────────────────────────────────────
   function appendMsg(type, text, fromMe, mediaUrl = null, timestamp = null, messageId = null) {
     const container = document.getElementById('chat-messages');
     document.getElementById('select-state')?.remove();
@@ -592,6 +619,7 @@ async function toggleVoice() {
   function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTextMsg(); } }
   function autoResize(el) { el.style.height = '48px'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
 
+  // ─── NOTIFICATIONS ───────────────────────────────────────────────
   async function requestNotifPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
       await Notification.requestPermission();
@@ -607,9 +635,11 @@ async function toggleVoice() {
     }
   }
 
+  // ─── POLLING ─────────────────────────────────────────────────────
   async function pollMessages() {
     try {
-      const res = await fetch(`${API}/messages/history`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await apiFetch(`${API}/messages/history`);
+      if (!res) return;
       const messages = await res.json();
       if (!Array.isArray(messages)) return;
 
@@ -624,7 +654,8 @@ async function toggleVoice() {
       });
 
       if (currentReceiverId) {
-        const convRes = await fetch(`${API}/messages/${currentReceiverId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const convRes = await apiFetch(`${API}/messages/${currentReceiverId}`);
+        if (!convRes) return;
         const convMsgs = await convRes.json();
         if (!Array.isArray(convMsgs)) return;
         if (convMsgs.length > lastMessageCount) {
@@ -639,39 +670,37 @@ async function toggleVoice() {
     } catch (e) {}
   }
 
-  // FIX: pollTimer now actually gets assigned so clearInterval works
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(pollMessages, 30000);
   }
 
+  // ─── TYPING STATUS ───────────────────────────────────────────────
+  async function sendTypingStatus(action) {
+    if (!currentReceiverId) return;
+    try {
+      await fetch(`${API}/status/typing`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ receiver_id: currentReceiverId, action })
+      });
+    } catch (e) {}
+  }
+
+  function handleTextInput(el) {
+    autoResize(el);
+    sendTypingStatus('typing');
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => sendTypingStatus('idle'), 3000);
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────────────
   loadUsers();
   requestNotifPermission();
   startPolling();
-  async function sendTypingStatus(action) {
-  if (!currentReceiverId) return;
-  try {
-    await fetch(`${API}/status/typing`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        receiver_id: currentReceiverId,
-        action: action  // "typing" | "recording" | "idle"
-      })
-    });
-  } catch (e) {}
-}
-let typingTimer = null;
-function handleTextInput(el) {
-  autoResize(el);
-  sendTypingStatus('typing');
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => sendTypingStatus('idle'), 3000);
-}
- 
 </script>
 </body>
 </html>
