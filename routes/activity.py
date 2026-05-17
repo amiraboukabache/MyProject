@@ -161,19 +161,6 @@ def get_all_activities():
 
 
 # ─────────────────────────────────────────
-# ✈️ PREFLIGHT — OPTIONS pour /status/typing
-# ─────────────────────────────────────────
-@activity_bp.route("/status/typing", methods=["OPTIONS"])
-def typing_preflight():
-    from flask import make_response
-    response = make_response()
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-    return response, 200
-
-
-# ─────────────────────────────────────────
 # ⌨️ STATUS TYPING — Envoyer un statut de frappe
 # ─────────────────────────────────────────
 @activity_bp.route("/status/typing", methods=["POST"])
@@ -188,7 +175,7 @@ def set_typing_status():
 
     data = request.json
     receiver_id = data.get("receiver_id")
-    action = data.get("action")  # "typing" | "recording" | "idle"
+    action = data.get("action")
 
     if not receiver_id or not action:
         return jsonify({"error": "Champs manquants : receiver_id et action requis"}), 400
