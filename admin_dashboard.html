@@ -348,7 +348,7 @@
   if (!allUsers.length) return;
   const role = document.querySelector('.filter-select').value;
   const filtered = allUsers.filter(u => {
-    const matchText = (u.name + ' ' + u.lastname).toLowerCase().includes(val.toLowerCase());
+    const matchText = (u.name + ' ' + u.lastname + ' ' + u.email).toLowerCase().includes(val.toLowerCase());
     const matchRole = role === 'all' || u.role === role;
     return matchText && matchRole;
   });
