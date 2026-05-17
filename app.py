@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, make_response
 from flask_cors import CORS
 from routes.auth import auth_bp
 from routes.profile import profile_bp
@@ -11,12 +11,22 @@ from routes.activity import activity_bp
 import os
 
 app = Flask(__name__)
+
 CORS(app,
      resources={r"/*": {"origins": "*"}},
      methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
      allow_headers=["Authorization", "Content-Type"],
      supports_credentials=False,
      automatic_options=True)
+
+@app.before_request
+def handle_options():
+    if request.method == "OPTIONS":
+        response = make_response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        return response, 200
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(profile_bp)
