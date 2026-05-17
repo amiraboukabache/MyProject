@@ -138,55 +138,6 @@ def get_history():
         return jsonify({"error": "Service temporairement indisponible. Réessayez dans quelques instants."}), 503
 
 
-@messages_bp.route("/messages/<other_user_id>", methods=["GET"])
-def get_messages(other_user_id):
-    token = get_token_from_request()
-    if not token:
-        return jsonify({"error": "Token manquant"}), 401
-
-    user = get_user_from_token(token)
-    if not user:
-        return jsonify({"error": "Token invalide"}), 401
-
-    sender_id = user.get("id")
-
-    cache_key = f"{sender_id}_{other_user_id}"
-    now = time.time()
-    if cache_key in conversation_cache:
-        cached_data, cached_time = conversation_cache[cache_key]
-        if now - cached_time < 15:
-            return jsonify(cached_data), 200
-
-    try:
-        sent = firestore_db.collection("Messages")\
-            .where("sender_id", "==", sender_id)\
-            .where("receiver_id", "==", other_user_id)\
-            .stream()
-
-        received = firestore_db.collection("Messages")\
-            .where("sender_id", "==", other_user_id)\
-            .where("receiver_id", "==", sender_id)\
-            .stream()
-
-        messages = []
-        for msg in sent:
-            messages.append(msg.to_dict())
-        for msg in received:
-            messages.append(msg.to_dict())
-
-        messages.sort(key=lambda x: x.get("date", ""))
-        conversation_cache[cache_key] = (messages, now)
-
-        return jsonify(messages), 200
-
-    except Exception as e:
-        if cache_key in conversation_cache:
-            cached_data, _ = conversation_cache[cache_key]
-            return jsonify(cached_data), 200
-        return jsonify({"error": "Service temporairement indisponible. Réessayez dans quelques instants."}), 503
-
-
-# FIX: route is now /messages/<message_id>/delete to avoid conflict with GET /messages/<id>
 @messages_bp.route("/messages/<message_id>/delete", methods=["DELETE"])
 def delete_message(message_id):
     token = get_token_from_request()
@@ -206,10 +157,16 @@ def delete_message(message_id):
             return jsonify({"error": "Message introuvable"}), 404
 
         msg_data = doc.to_dict()
+
+        print(f"TOKEN sender_id: {sender_id}")
+        print(f"MESSAGE sender_id: {msg_data.get('sender_id')}")
+
         if msg_data.get("sender_id") != sender_id:
             return jsonify({"error": "Vous ne pouvez pas supprimer ce message"}), 403
 
         firestore_db.collection("Messages").document(message_id).delete()
+
+        log_activity(sender_id, "delete_message")
 
         keys_to_delete = [k for k in conversation_cache if sender_id in k]
         for k in keys_to_delete:
