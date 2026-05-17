@@ -344,17 +344,26 @@
     `).join('');
   }
 
-  function filterUsers(val) {
-    const filtered = allUsers.filter(u =>
-      (u.name + ' ' + u.lastname + ' ' + u.email).toLowerCase().includes(val.toLowerCase())
-    );
-    renderUsers(filtered);
-  }
+ function filterUsers(val) {
+  if (!allUsers.length) return;
+  const role = document.querySelector('.filter-select').value;
+  const filtered = allUsers.filter(u => {
+    const matchText = (u.name + ' ' + u.lastname + ' ' + u.email).toLowerCase().includes(val.toLowerCase());
+    const matchRole = role === 'all' || u.role === role;
+    return matchText && matchRole;
+  });
+  renderUsers(filtered);
+}
 
   function filterByRole(role) {
-    const filtered = role === 'all' ? allUsers : allUsers.filter(u => u.role === role);
-    renderUsers(filtered);
-  }
+  const val = document.querySelector('.search-input').value.toLowerCase();
+  const filtered = allUsers.filter(u => {
+    const matchText = (u.name + ' ' + u.lastname + ' ' + u.email).toLowerCase().includes(val);
+    const matchRole = role === 'all' || u.role === role;
+    return matchText && matchRole;
+  });
+  renderUsers(filtered);
+}
 
   async function deleteUser(userId, btn) {
     if (!confirm('Are you sure you want to delete this user?')) return;
