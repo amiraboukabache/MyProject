@@ -344,26 +344,26 @@
     `).join('');
   }
 
- function filterUsers(val) {
-  if (!allUsers.length) return;
-  const role = document.querySelector('.filter-select').value;
-  const filtered = allUsers.filter(u => {
-    const matchText = (u.name + ' ' + u.lastname + ' ' + u.email).toLowerCase().includes(val.toLowerCase());
-    const matchRole = role === 'all' || u.role === role;
-    return matchText && matchRole;
-  });
-  renderUsers(filtered);
-}
+  function filterUsers(val) {
+    if (!allUsers.length) return;
+    const role = document.querySelector('.filter-select').value;
+    const filtered = allUsers.filter(u => {
+      const matchText = (u.name + ' ' + u.lastname).toLowerCase().includes(val.toLowerCase());
+      const matchRole = role === 'all' || u.role === role;
+      return matchText && matchRole;
+    });
+    renderUsers(filtered);
+  }
 
   function filterByRole(role) {
-  const val = document.querySelector('.search-input').value.toLowerCase();
-  const filtered = allUsers.filter(u => {
-    const matchText = (u.name + ' ' + u.lastname + ' ' + u.email).toLowerCase().includes(val);
-    const matchRole = role === 'all' || u.role === role;
-    return matchText && matchRole;
-  });
-  renderUsers(filtered);
-}
+    const val = document.querySelector('.search-input').value.toLowerCase();
+    const filtered = allUsers.filter(u => {
+      const matchText = (u.name + ' ' + u.lastname).toLowerCase().includes(val);
+      const matchRole = role === 'all' || u.role === role;
+      return matchText && matchRole;
+    });
+    renderUsers(filtered);
+  }
 
   async function deleteUser(userId, btn) {
     if (!confirm('Are you sure you want to delete this user?')) return;
@@ -438,37 +438,23 @@
     } catch (e) { alert('Error deleting mapping.'); }
   }
 
-  // ── PARSE DATE (FIX) ──────────────────────────────────────
-  // Robustly parses date strings from the API regardless of whether
-  // they include a timezone offset or not.
-  // If no offset is present, the string is treated as UTC (appending 'Z')
-  // to avoid the browser misreading it as local time.
+  // ── PARSE DATE ────────────────────────────────────────────
   function parseDate(dateStr) {
     if (!dateStr) return null;
-    // Normalize: replace space separator with 'T' (handles "2026-05-03 17:56:36+00:00")
     let normalized = dateStr.trim().replace(' ', 'T');
-    // If no timezone info present (no +, no Z after the time part), treat as UTC
     const hasOffset = /[Zz]$|[+-]\d{2}:\d{2}$/.test(normalized);
-    if (!hasOffset) {
-      normalized += 'Z';
-    }
+    if (!hasOffset) normalized += 'Z';
     const d = new Date(normalized);
     return isNaN(d.getTime()) ? null : d;
   }
 
-  // ── FORMAT DATE for display (Algeria = UTC+1) ─────────────
   function formatDate(dateStr) {
     const d = parseDate(dateStr);
     if (!d) return 'Unknown time';
     return d.toLocaleString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-      timeZone: 'Africa/Algiers'
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false, timeZone: 'Africa/Algiers'
     });
   }
 
@@ -478,7 +464,6 @@
       const res = await fetch(`${API}/admin/activity`, { headers: { 'Authorization': `Bearer ${token}` } });
       const activities = await res.json();
 
-      // Sort descending by parsed date (most recent first)
       const sorted = [...activities].sort((a, b) => {
         const da = parseDate(a.date);
         const db = parseDate(b.date);
@@ -488,12 +473,14 @@
         return db - da;
       });
 
+      // Only show these actions
+      const filtered = sorted.filter(a => ['login', 'create_account', 'send_message'].includes(a.action));
+
       const makeLog = (a) => {
         const timeStr = formatDate(a.date);
         const dotClass = a.action === 'login'          ? 'log-info'
                        : a.action === 'create_account' ? 'log-warn'
                        : a.action === 'send_message'   ? 'log-info'
-                       : a.action === 'logout'         ? 'log-error'
                        : 'log-info';
         return `
           <div class="log-item">
@@ -505,13 +492,13 @@
       };
 
       const overviewEl = document.getElementById('activity-logs');
-      overviewEl.innerHTML = sorted.length
-        ? sorted.slice(0, 5).map(makeLog).join('')
+      overviewEl.innerHTML = filtered.length
+        ? filtered.slice(0, 5).map(makeLog).join('')
         : '<div class="loading">No activity found.</div>';
 
       const monitorEl = document.getElementById('monitor-logs');
-      monitorEl.innerHTML = sorted.length
-        ? sorted.slice(0, 20).map(makeLog).join('')
+      monitorEl.innerHTML = filtered.length
+        ? filtered.slice(0, 20).map(makeLog).join('')
         : '<div class="loading">No activity found.</div>';
 
     } catch (e) {
@@ -556,5 +543,6 @@
   loadActivity();
   setInterval(loadActivity, 10000);
 </script>
+
 </body>
 </html>
