@@ -551,7 +551,10 @@
   async function deleteMessage(messageId, divEl) {
     if (!confirm('Delete this message?')) return;
     try {
-      const res = await apiFetch(`${API}/messages/${messageId}/delete`, { method: 'DELETE' });
+      const res = await fetch(`${API}/messages/${messageId}/delete`, {
+  method: 'DELETE',
+  headers: { 'Authorization': `Bearer ${token}` }
+});
       if (res && res.ok) {
         divEl.remove();
       } else {

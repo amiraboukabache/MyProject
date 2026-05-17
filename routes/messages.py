@@ -5,7 +5,15 @@ import uuid
 import time
 from datetime import datetime, timezone
 from config import SUPABASE_URL, SUPABASE_KEY, firestore_db
-from routes.activity import log_activity_internal
+from datetime import datetime, timezone
+
+
+def log_activity(user_id, action):
+    firestore_db.collection("UserActivity").add({
+        "user_id": user_id,
+        "action": action,
+        "date": datetime.now(timezone.utc).isoformat()
+    })
 
 messages_bp = Blueprint("messages", __name__)
 
