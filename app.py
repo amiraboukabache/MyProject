@@ -11,7 +11,12 @@ from routes.activity import activity_bp
 import os
 
 app = Flask(__name__)
-CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Authorization", "Content-Type"])
+CORS(app,
+     resources={r"/*": {"origins": "*"}},
+     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+     allow_headers=["Authorization", "Content-Type"],
+     supports_credentials=False,
+     automatic_options=True)
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(profile_bp)
